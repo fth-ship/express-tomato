@@ -13,11 +13,11 @@ To mount within another express server, run the `.middleware()` method:
 
 Available options:
 
-*analytics* - a Google Analytics identifier
-*db* - mongodb server to use (defaults to mongodb://localhost/tomato)
-*timers* - an object with `workSec` and `breakSec` attributes specifying the
-  length of the work and break timers (defaults to {workSec: 25 * 60,
-  breakSec: 5 * 60})
+    *analytics* - a Google Analytics identifier
+    *db* - mongodb server to use (defaults to mongodb://localhost/tomato)
+    *timers* - an object with `workSec` and `breakSec` attributes specifying the
+        length of the work and break timers (defaults to {workSec: 25 * 60,
+        breakSec: 5 * 60})
 
 [expressjs]: http://expressjs.com
 [backbonejs]: http://backbonejs.org
