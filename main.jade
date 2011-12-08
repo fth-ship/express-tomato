@@ -1,0 +1,47 @@
+!!! 5
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='description', content='Use the Pomodoro Technique to organize and track your tasks, all from a browser window. Incorporate work and breaks easily into your schedule!')
+    meta(name='keywords', content='pomodoro technique, task list, time management')
+    link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Droid+Serif')
+    link(rel='stylesheet', type='text/css', href='/css/tomato.css')
+    script(type='text/javascript', src='/desktop.js')
+    - if (analytics)
+      script
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '#{analytics}']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    script
+      $(function() {
+        var tomato = require('tomato');
+        tomato.initialize("#{tomato.slug}", #{tomato.workSec}, #{tomato.breakSec});
+        $("#tasks").sortable({axis: 'y', containment: 'parent', items: 'li.task'});
+        $("#tasks").disableSelection();
+      });
+    title #{tomato.slug} | Tomato
+  body
+    #fmogh: a(target='_blank', href='http://github.com/lmjohns3/express-tomato') FMOGH
+
+    #app
+      #timer
+      #screen
+      #title
+        span.slug= tomato.slug
+        input(class='input', type='text', value='', size='12')
+      ul#tasks: li: input#new-task(type='text', value='', size='40', placeholder='Add a task...')
+
+    script(type='text/template', id='task-template')
+      .icon.cursor &#x261e;
+      .icon.finish(title='mark this task as finished') &#x2714;
+      //.icon.timer &#x272a;
+      .icon.remove(title='remove this task entirely') &#x2718;
+      .timestamp <%= timestamp %>
+      input.input(type='text', value='', size='25')
+      .name <%= name %>
+      .tomatoes

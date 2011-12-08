@@ -1,0 +1,178 @@
+@import 'nib'
+
+global-reset()
+reset-html5()
+
+feedback()
+  cursor: pointer
+  &:hover
+    background: $lightyeller
+
+timer(fg)
+  background: fg
+  //linear-gradient(top, fg 40%, darken(fg, 10%) 60%)
+  &:hover
+    background: lighten(fg, 10%)
+    //linear-gradient(top, lighten(fg, 10%) 40%, fg 60%)
+
+$spacing = 20px
+$gridline = 2px * ($spacing * 1.5px)
+
+$timerpadding = 2px * $spacing
+$timerleft = $gridline + ($spacing / 2px) - $timerpadding
+$timerwidth = 10px * $spacing
+$timerheight = 4px * $spacing
+
+$white = #efefef
+$lightyeller = #ff9
+$lightblue = #def
+$lightgray = #ccc
+$darkgray = #666
+$tomato = #c30
+$green = #090
+
+body
+  font: $spacing/1 "Droid Sans", sans-serif
+  margin: 0
+  padding: 0
+  overflow-x: hidden
+
+input[type=text]
+  font-size: $spacing
+  padding: 1px 3px
+  border: solid 1px lighten($tomato, 20%)
+  border-radius: 5px
+
+#fmogh
+  absolute: top (2px * $spacing) right -50px
+  transform: rotate(45deg)
+  background: $white
+  color: #fff
+
+  &:hover
+    background: linear-gradient(top, $tomato, darken($tomato, 30%))
+  a
+    padding: ($spacing / 2px) ($spacing * 3)
+    color: inherit
+    background: inherit
+    text-decoration: none
+
+#timer
+  width: $timerwidth
+  font-size: 4px * $spacing
+  font-family: Inconsolata, Consolata, monospace
+  text-align: center
+  absolute: top $spacing left ($gridline + ($spacing / 2px) - (2px * $spacing))
+  padding: $spacing $timerpadding
+  border-radius: 2px * $spacing
+  color: $white
+  cursor: pointer
+  z-index: 1000
+
+  &.work
+    timer($tomato)
+  &.break
+    timer($darkgray)
+
+#screen
+  fixed: top left
+  width: 100%
+  height: 100%
+  background: $lightgray
+  opacity: 0.7
+  z-index: 1
+  display: none
+
+  &.running
+    display: block
+
+#title
+  cursor: pointer
+  absolute: top (3px * $spacing) left ($timerleft + $timerwidth + 2 * $timerpadding + $spacing)
+  feedback()
+
+  &.editing
+    input { display: block }
+    span { display: none }
+
+  input, span { font-size: 2px * $spacing }
+  input { display: none }
+  span { display: block }
+
+#tasks
+  clear: left
+  list-style: none
+  text-align: left
+  margin-top: $timerheight + (3.5px * $spacing)
+
+  li
+    padding: ($spacing / 2px)
+    position: relative
+    clear: both
+    height: 1.1px * $spacing
+
+  li.task
+    &:hover
+      cursor: move
+      background: $lightblue
+      .icon { opacity: 0.3 }
+
+    &.active
+      background: $lightyeller
+      .cursor { opacity: 1.0 }
+
+    &.editing
+      .input { display: block }
+      .name { display: none }
+
+    &.finished
+      color: $darkgray
+      background: $lightgray
+      .finish { opacity: 1.0 }
+
+    .timestamp
+      display: none
+      float: left
+
+    .input
+      display: none
+      float: left
+      font-size: $spacing - 3px
+
+    .name
+      display: block
+      float: left
+      feedback()
+
+    .icon
+      cursor: pointer
+      width: $spacing
+      margin-right: ($spacing / 2px)
+      float: left
+      opacity: 0.0
+
+      &:hover { opacity: 1.0 }
+
+      &.remove
+        float: right
+        margin-right: 0
+        color: $tomato
+
+      &.finish { color: $green }
+
+    .tomatoes
+      float: right
+
+      span
+        display: block
+        width: $spacing
+        height: $spacing
+        background: $tomato
+        border-radius: $spacing
+        margin-right: ($spacing / 2px)
+
+#new-task
+  margin-left: $gridline
+
+#tasks > li:first-child
+  margin-bottom: 15px
