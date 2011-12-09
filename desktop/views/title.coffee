@@ -2,7 +2,7 @@ class exports.Title extends Backbone.View
   el: $('#title')
 
   events:
-    'dblclick .slug': 'edit'
+    'click .slug': 'edit'
     'keypress .input': 'updateOnEnter'
 
   initialize: ->
