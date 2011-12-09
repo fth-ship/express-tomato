@@ -1,4 +1,8 @@
 class exports.Task extends Backbone.Model
+  validate: (attrs) ->
+    return unless 'name' of attrs
+    return 'name must be nonempty' unless attrs.name.match /\S+/
+
   toggleFinished: ->
     @save finishedAt: if @isFinished() then null else Date.now()
 
@@ -25,7 +29,6 @@ class exports.Task extends Backbone.Model
       "#{d.getFullYear()}-#{d.getMonth()}-#{d.getDay()} #{d.getHours()}:#{d.getMinutes()}"
 
     json = @toJSON()
-    json.safeName = @get('name').replace /</, '&lt;'
-    json.finishedClass = if @isFinished() then 'finished' else ''
+    json.escapedName = @escape 'name'
     json.timestamp = formatDate json.finishedAt or json.createdAt
     return json
