@@ -43,5 +43,5 @@ html(lang='en')
       .icon.remove(title='remove this task entirely') &#x2718;
       .timestamp <%= timestamp %>
       input.input(type='text', value='', size='25')
-      .name <%= name %>
+      .name <%= escapedName %>
       .tomatoes
