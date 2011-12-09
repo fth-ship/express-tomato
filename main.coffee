@@ -21,52 +21,36 @@
 _ = require 'underscore'
 crypto = require 'crypto'
 express = require 'express'
+fs = require 'fs'
 mongoose = require 'mongoose'
 nib = require 'nib'
 stitch = require 'stitch'
 stylus = require 'stylus'
-{parser, uglify} = require 'uglify-js'
-
-hash = (s) ->
-  h = crypto.createHash 'md5'
-  h.update s
-  return h.digest 'hex'
-
-compileCss = (str, path) ->
-  stylus(str).set('filename', path).set('compress', true).use(nib())
-
-compileAndMinify = ->
-  (req, res) =>
-    @compile (err, source) ->
-      if err
-        console.error "#{err.stack}"
-        message = "" + err.stack
-        res.writeHead 500, 'Content-Type': 'text/javascript'
-        res.end "throw #{JSON.stringify message}"
-      else
-        {ast_mangle, ast_squeeze, gen_code} = uglify
-        res.writeHead 200, 'Content-Type': 'text/javascript'
-        res.end gen_code ast_squeeze ast_mangle parser.parse source
-
-JSDEPS = [
-    "#{__dirname}/public/js/jquery.js"
-    "#{__dirname}/public/js/jquery-ui.js"
-    "#{__dirname}/public/js/underscore.js"
-    "#{__dirname}/public/js/backbone.js"
-    ]
-
-desktop = stitch.createPackage
-  paths: ["#{__dirname}/desktop"]
-  dependencies: JSDEPS
-desktop.createMinifiedServer = compileAndMinify
+uglify = require 'uglify-js'
 
 
-module.exports.middleware = (CONFIG) ->
-  NOTPRESENT = '__NOT_PRESENT_NOT_PRESENT_NOT_PRESENT__'
+module.exports.middleware = (options) ->
+  desktop = stitch.createPackage
+    paths: ["#{__dirname}/desktop"]
+    dependencies: [
+      "#{__dirname}/public/js/jquery.js"
+      "#{__dirname}/public/js/jquery-ui.js"
+      "#{__dirname}/public/js/underscore.js"
+      "#{__dirname}/public/js/backbone.js"
+      ]
 
-  TIMERS = _.extend { workSec: 25 * 60, breakSec: 5 * 60 }, CONFIG?.timers
+  desktop.compile (err, source) ->
+    {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
+    minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
+    fs.writeFile "#{__dirname}/public/desktop.js", minified, (err) ->
+      throw err if err
+      console.log 'compiled desktop.js'
 
-  mongoose.connect CONFIG?.db or 'mongodb://localhost/tomato'
+  NOTPRESENT = '.>,I/-rFhdauIC@P*w~29r0X#%*+HPW?nMQ%F/P|>mW%)XyX+eRo$({8H8q!~Vr{|?U4/;;d`A_/K;gX'
+
+  TIMERS = _.extend { workSec: 25 * 60, breakSec: 5 * 60 }, options?.timers
+
+  mongoose.connect options?.db or 'mongodb://localhost/tomato'
 
   TaskSchema = new mongoose.Schema
     id: String
@@ -112,14 +96,17 @@ module.exports.middleware = (CONFIG) ->
     app.set 'views', __dirname
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
-    app.use express.logger 'tiny'
-    app.use stylus.middleware src: "#{__dirname}/public", compile: compileCss
+    app.use express.logger 'short'
+    app.use stylus.middleware
+      src: "#{__dirname}/public"
+      compile: (str, path) ->
+        stylus(str).set('filename', path).set('compress', true).use(nib())
     app.use express.methodOverride()
     app.use express.bodyParser()
     app.use express.static "#{__dirname}/public"
     app.use app.router
 
-  app.get '/desktop.js', desktop.createMinifiedServer() # or .createServer()
+  #app.get '/desktop.js', desktop.createServer()
 
   # routing middleware
 
@@ -165,7 +152,7 @@ module.exports.middleware = (CONFIG) ->
 
   # GET /:tomato -- return the html to drive the client-side tomato app
   app.get '/:tomato', fetchTomato, (req, res) ->
-    res.render 'main', analytics: CONFIG?.analytics
+    res.render 'main', analytics: options?.analytics
 
   # PUT /:tomato -- update the id, name, etc. of a tomato
   app.put '/:tomato', fetchTomato, (req, res) ->
@@ -192,6 +179,11 @@ module.exports.middleware = (CONFIG) ->
 
   # POST /:tomato/tasks -- create a new task for a tomato
   app.post '/:tomato/tasks', fetchTasks, (req, res) ->
+    hash = (s) ->
+      h = crypto.createHash 'md5'
+      h.update s
+      return h.digest 'hex'
+
     tomato = res.local 'tomato'
     name = req.param 'name'
     now = Date.now()
@@ -239,6 +231,7 @@ module.exports.middleware = (CONFIG) ->
       res.send 200
 
   return app
+
 
 if not module.parent
   app = exports.middleware()
