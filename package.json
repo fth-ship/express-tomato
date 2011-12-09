@@ -2,8 +2,11 @@
   "name": "lmj-tomato",
   "description": "pomodoro app for node.js",
   "author": "Leif Johnson <leif@leifjohnson.net>",
-  "version": "0.0.2",
-  "repository": "git://github.com/lmjohns3/express-tomato.git",
+  "version": "0.0.3",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lmjohns3/express-tomato.git"
+  },
   "main": "main.coffee",
   "dependencies": {
     "coffee-script": ">= 1.1.1",
