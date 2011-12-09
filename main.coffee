@@ -152,7 +152,10 @@ module.exports.middleware = (options) ->
 
   # GET /:tomato -- return the html to drive the client-side tomato app
   app.get '/:tomato', fetchTomato, (req, res) ->
-    res.render 'main', analytics: options?.analytics
+    ctx =
+      analytics: options?.analytics
+      basepath: app.settings.basepath.replace /\/$/, ''
+    res.render 'main', ctx
 
   # PUT /:tomato -- update the id, name, etc. of a tomato
   app.put '/:tomato', fetchTomato, (req, res) ->

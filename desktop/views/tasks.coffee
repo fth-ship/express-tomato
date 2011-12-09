@@ -39,6 +39,11 @@ class exports.Tasks extends Backbone.View
     $(@el).find('li').first().after el
     $(el).removeClass 'active'
 
+    if @collection.length is 1
+      @select item.id
+    else
+      @selectNext()
+
   addAll: =>
     reversed = (item for item in @collection.models)
     while item = reversed.pop()

@@ -28,7 +28,7 @@ class exports.App extends Backbone.View
     $(document).bind 'keypress', @keyPressed
 
   redirect: (model, slug) =>
-    document.location.href = "/#{slug}"
+    document.location.href = "#{@model.get 'basepath'}/#{slug}"
 
   timerStarted: =>
     $('#new-task').focus()
@@ -43,6 +43,7 @@ class exports.App extends Backbone.View
     @timer.start()
 
   tasksReset: (tasks) =>
+    return $('#about').hide().fadeIn(300) if tasks.length is 0
     workSec = @model.get 'workSec'
     now = Date.now()
     tasks.each (task) =>

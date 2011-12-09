@@ -23,8 +23,10 @@ $timerleft = $gridline + ($spacing / 2px) - $timerpadding
 $timerwidth = 10px * $spacing
 $timerheight = 4px * $spacing
 
+$black = #000
+$brightwhite = #fff
 $white = #efefef
-$lightyeller = #ff9
+$lightyeller = #ffb
 $lightblue = #def
 $lightgray = #ccc
 $darkgray = #666
@@ -47,7 +49,7 @@ input[type=text]
   absolute: top (2px * $spacing) right -50px
   transform: rotate(45deg)
   background: $white
-  color: #fff
+  color: $brightwhite
 
   &:hover
     background: linear-gradient(top, $tomato, darken($tomato, 30%))
@@ -67,7 +69,7 @@ input[type=text]
   border-radius: 2px * $spacing
   color: $white
   cursor: pointer
-  z-index: 1000
+  z-index: 10
 
   &.work
     timer($tomato)
@@ -79,7 +81,7 @@ input[type=text]
   width: 100%
   height: 100%
   background: $lightgray
-  opacity: 0.7
+  opacity: 0.666
   z-index: 1
   display: none
 
@@ -128,7 +130,10 @@ input[type=text]
     &.finished
       color: $darkgray
       background: $lightgray
+      cursor: default
+
       .finish { opacity: 1.0 }
+      .cursor, .remove { visibility: hidden }
 
     .timestamp
       display: none
@@ -176,3 +181,26 @@ input[type=text]
 
 #tasks > li:first-child
   margin-bottom: 15px
+
+#about
+  absolute: top $spacing left $spacing
+  z-index: 100
+  padding: $spacing
+  background: $white
+  width: 33em
+  border-radius: $spacing
+  box-shadow: 0 0 ($spacing / 2px) $black
+  display: none
+
+  p
+    font: 16px/1.5 "Droid Serif", serif
+    margin-bottom: $spacing
+
+  button
+    smooth-button()
+
+#halp
+  absolute: top $spacing right (7px * $spacing)
+  cursor: pointer
+  color: $darkgray
+  &:hover { color: $black }

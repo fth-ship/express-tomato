@@ -3,7 +3,7 @@ class exports.Tomato extends Backbone.Model
     return unless 'slug' of attrs
     return 'slug must be nonempty' unless attrs.slug.match /\S+/
 
-  url: -> "/#{@id}"
+  url: -> "#{@get 'basepath'}/#{@id}"
 
   initialize: ->
     @id = @get 'slug'

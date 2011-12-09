@@ -43,12 +43,14 @@ class exports.Timer extends Backbone.Model
       @trigger 'timer:finish', @get 'flavor'
 
   ring: ->
+    tomato = @get 'tomato'
     # ringing sound clip
     # from http://www.freesound.org/samplesViewSingle.php?id=14262
     # by xyzr_kx
     # licensed under CC Sampling Plus 1.0
     @ringer.play()
-    @ringer = new Audio '/tomato.mp3'
+    ext = if @ringer.canPlayType('audio/ogg') then 'ogg' else 'mp3'
+    @ringer = new Audio "#{tomato.get 'basepath'}/tomato.#{ext}"
 
   reset: ->
     flavor = @get 'flavor'

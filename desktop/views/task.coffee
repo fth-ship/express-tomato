@@ -41,6 +41,7 @@ class exports.Task extends Backbone.View
     @model.toggleFinished()
 
   edit: ->
+    return if @model.isFinished()
     $(@el).addClass 'editing'
     @input.focus()
     return false
@@ -59,6 +60,7 @@ class exports.Task extends Backbone.View
     $(@el).remove()
 
   triggerSelect: ->
+    return if @model.isFinished()
     @trigger 'task:select', @model.id
 
   triggerStart: ->

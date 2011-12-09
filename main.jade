@@ -5,8 +5,8 @@ html(lang='en')
     meta(name='description', content='Use the Pomodoro Technique to organize and track your tasks, all from a browser window. Incorporate work and breaks easily into your schedule!')
     meta(name='keywords', content='pomodoro technique, task list, time management')
     link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Droid+Serif')
-    link(rel='stylesheet', type='text/css', href='/css/tomato.css')
-    script(type='text/javascript', src='/desktop.js')
+    link(rel='stylesheet', type='text/css', href='#{basepath}/css/tomato.css')
+    script(type='text/javascript', src='#{basepath}/desktop.js')
     - if (analytics)
       script
         var _gaq = _gaq || [];
@@ -20,13 +20,44 @@ html(lang='en')
     script
       $(function() {
         var tomato = require('tomato');
-        tomato.initialize("#{tomato.slug}", #{tomato.workSec}, #{tomato.breakSec});
+        tomato.initialize("#{basepath}", "#{tomato.slug}", #{tomato.workSec}, #{tomato.breakSec});
         $("#tasks").sortable({axis: 'y', containment: 'parent', items: 'li.task'});
         $("#tasks").disableSelection();
       });
     title #{tomato.slug} | Tomato
   body
     #fmogh: a(target='_blank', href='http://github.com/lmjohns3/express-tomato') FMOGH
+
+    #about(onclick='javascript:$("#about").fadeOut(300)')
+      p.
+        Welcome! This is a browser-based tool for keeping track of tasks and
+        enhancing productivity using the <a
+        href="http://www.pomodorotechnique.com" target="_blank">Pomodoro
+        Technique</a>.
+      p.
+        To get started, type in the names of a few tasks. When you're ready to
+        work, double-click a task. The timer starts, the app dims, and a hand
+        points at the task you're focused on. Work on your task until the bell
+        rings. After finishing a "tomato" of work, the timer changes to indicate
+        break mode. Take a short break by clicking on the timer again; get up
+        and walk around a little. When the break is over, double-click a task
+        and get back to work!
+      p.
+        When you've finished a task, click the check mark next to its name. Over
+        time, you'll be able to see the tasks you've completed, and how many
+        "tomatoes" they've each needed.
+      p.
+        You can use the keyboard, too. J and K move the cursor up and down the
+        task list. F marks a task as finished. + adds a new task. Enter starts
+        the timer.
+      p.
+        This tool is very much a work in progress. I would enjoy hearing what
+        you think of it! Email me at leif@leifjohnson.net, or <a target="_blank"
+        href="http://github.com/lmjohns3/express-tomato">check out the code</a>.
+
+      button OK
+
+    a#halp(onclick='javascript:$("#about").fadeIn(300)') Help
 
     #app
       #timer
@@ -37,7 +68,7 @@ html(lang='en')
       ul#tasks: li: input#new-task(type='text', value='', size='40', placeholder='Add a task...')
 
     script(type='text/template', id='task-template')
-      .icon.cursor &#x261e;
+      .icon.cursor(title='make this the current task') &#x261e;
       .icon.finish(title='mark this task as finished') &#x2714;
       //.icon.timer &#x272a;
       .icon.remove(title='remove this task entirely') &#x2718;
