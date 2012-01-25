@@ -5,12 +5,9 @@ class exports.Tasks extends Backbone.View
 
   events:
     'sortupdate': 'sortUpdated'
-    'keypress #new-task': 'keyPressed'
 
   initialize: ->
     @cursor = parseInt(document.location.hash.replace(/^\#/, '')) or 1
-
-    @input = $('#new-task')
 
     @collection.bind 'add', @addOne
     @collection.bind 'reset', @addAll
@@ -24,12 +21,6 @@ class exports.Tasks extends Backbone.View
   sortUpdated: ->
     @$('li.task').each (i, item) =>
       @collection.get($(item).attr('id')).save order: i
-
-  keyPressed: (e) ->
-    v = @input.val()
-    return unless e.keyCode is 13 and /\S+/.test v
-    @collection.create name: v.replace /^\s+|\s+$/g, ''
-    @input.val ''
 
   addOne: (item) =>
     view = new task.Task(model: item)

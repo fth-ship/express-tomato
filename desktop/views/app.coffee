@@ -7,6 +7,10 @@ title = require 'views/title'
 class exports.App extends Backbone.View
   el: $('#app')
 
+  events:
+    'keypress #new-task': 'newTaskKeyPressed'
+    'blur #new-task': 'newTaskBlur'
+
   initialize: ->
     Backbone.history or= new Backbone.History
 
@@ -82,3 +86,14 @@ class exports.App extends Backbone.View
     if e.which is 32 # <space>
       @tasks.selected().start()
       return false
+
+  newTaskKeyPressed: (e) ->
+    v = $('#new-task').val()
+    return unless e.keyCode is 13 and /\S+/.test v
+    order = @collection.first().get 'order'
+    name = v.replace /^\s+|\s+$/g, ''
+    @collection.create name: name, order: order - 1
+    $('#new-task').val ''
+
+  newTaskBlur: ->
+    $('body').focus()
