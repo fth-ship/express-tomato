@@ -12,6 +12,9 @@ class exports.Task extends Backbone.Model
   start: ->
     @trigger 'task:start'
 
+  edit: ->
+    @trigger 'task:edit'
+
   addTomato: ->
     toms = @get 'tomatoes'
     toms.push Date.now()

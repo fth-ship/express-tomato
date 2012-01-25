@@ -26,8 +26,9 @@ class exports.Tasks extends Backbone.View
       @collection.get($(item).attr('id')).save order: i
 
   keyPressed: (e) ->
-    return if e.keyCode isnt 13
-    @collection.create name: @input.val()
+    v = @input.val()
+    return unless e.keyCode is 13 and /\S+/.test v
+    @collection.create name: v.replace /^\s+|\s+$/g, ''
     @input.val ''
 
   addOne: (item) =>

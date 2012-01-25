@@ -14,6 +14,7 @@ class exports.Task extends Backbone.View
 
   initialize: ->
     @model.bind 'change', @render
+    @model.bind 'task:edit', @edit, @
 
   render: =>
     $(@el).attr 'id', @model.id
@@ -51,6 +52,7 @@ class exports.Task extends Backbone.View
     if name isnt @model.get 'name'
       @model.save name: name
     $(@el).removeClass 'editing'
+    $('body').focus()
 
   updateOnEnter: (e) ->
     @close() if e.keyCode is 13

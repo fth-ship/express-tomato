@@ -28,7 +28,7 @@ class exports.App extends Backbone.View
     $(document).bind 'keypress', @keyPressed
 
   redirect: (model, slug) =>
-    document.location.href = "#{@model.get 'basepath'}/#{slug}"
+    document.location.href = "#{@model.get 'basepath'}/#{encodeURIComponent slug}"
 
   timerStarted: =>
     $('#new-task').focus()
@@ -59,21 +59,26 @@ class exports.App extends Backbone.View
     return if e.target.value? or @timer.isRunning()
     console.log e.which, String.fromCharCode e.which
 
-    if e.which in [61, 43]
+    if e.which in [61, 43] # [+, =]
       $('#new-task').focus()
       return false
 
-    if e.which is 107
+    if e.which is 107 # j
       @tasks.selectPrev()
       return false
 
-    if e.which is 106
+    if e.which is 106 # k
       @tasks.selectNext()
       return false
 
-    if e.which is 102
+    if e.which is 102 # f
       @tasks.selected().toggleFinished()
       return false
 
-    if e.which is 13
+    if e.which is 13 # <enter>
+      @tasks.selected().edit()
+      return false
+
+    if e.which is 32 # <space>
       @tasks.selected().start()
+      return false

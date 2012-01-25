@@ -14,7 +14,5 @@ class exports.Tasks extends Backbone.Collection
   comparator: (task) ->
     [
       task.isFinished()
-      Date.now() - task.get 'finishedAt'
       task.get 'order'
-      Date.now() - task.get 'updatedAt'
     ]
