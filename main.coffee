@@ -106,7 +106,7 @@ module.exports.middleware = (options) ->
     app.use express.static "#{__dirname}/public"
     app.use app.router
 
-  #app.get '/desktop.js', desktop.createServer()
+  app.get '/desktop.js', desktop.createServer()
 
   # routing middleware
 
@@ -115,7 +115,7 @@ module.exports.middleware = (options) ->
     fields = ['slug', 'workSec', 'breakSec', 'updatedAt']
     Tomato.findOne conditions, fields, (err, tomato) ->
       return res.send(err, 500) if err
-      return res.send(404) if not tomato
+      return res.send(404) unless tomato
       res.locals tomato: tomato
       next()
 
@@ -124,6 +124,7 @@ module.exports.middleware = (options) ->
     fields = ['slug', 'updatedAt', 'tasks']
     Tomato.findOne conditions, fields, (err, tomato) ->
       return res.send(err, 500) if err
+      return res.send(404) unless tomato
       res.locals tomato: tomato
       next()
 
@@ -133,6 +134,7 @@ module.exports.middleware = (options) ->
     fields = ['slug', 'updatedAt', 'tasks']
     Tomato.findOne conditions, fields, (err, tomato) ->
       return res.send(err, 500) if err
+      return res.send(404) unless tomato
       task = _.find tomato.tasks, (t) -> t.id is id
       return res.send(404) unless task?
       res.locals tomato: tomato, task: task
@@ -154,7 +156,7 @@ module.exports.middleware = (options) ->
   app.get '/:tomato', fetchTomato, (req, res) ->
     ctx =
       analytics: options?.analytics
-      basepath: app.settings.basepath.replace /\/$/, ''
+      basepath: (app.settings.basepath or '').replace /\/$/, ''
     res.render 'main', ctx
 
   # PUT /:tomato -- update the id, name, etc. of a tomato
@@ -236,7 +238,7 @@ module.exports.middleware = (options) ->
   return app
 
 
-if not module.parent
+unless module.parent
   app = exports.middleware()
   app.listen 3000
   console.log 'tomato server listening on http://localhost:3000'
