@@ -15,7 +15,7 @@ timer(fg)
     background: lighten(fg, 10%)
     //linear-gradient(top, lighten(fg, 10%) 40%, fg 60%)
 
-$spacing = 20px
+$spacing = 18px
 $gridline = 2px * ($spacing * 1.5px)
 
 $timerpadding = 2px * $spacing
@@ -44,6 +44,14 @@ input[type=text]
   padding: 1px 3px
   border: solid 1px lighten($tomato, 20%)
   border-radius: 5px
+
+#header
+  fixed: top left
+  width: 100%
+  height: $timerheight + 6px * $spacing
+  box-shadow: 0 0 ($spacing / 2px) #000
+  background: $brightwhite
+  z-index: 100
 
 #fmogh
   absolute: top (2px * $spacing) right -50px
@@ -76,18 +84,6 @@ input[type=text]
   &.break
     timer($darkgray)
 
-#screen
-  fixed: top left
-  width: 100%
-  height: 100%
-  background: $lightgray
-  opacity: 0.666
-  z-index: 1
-  display: none
-
-  &.running
-    display: block
-
 #title
   cursor: pointer
   absolute: top (3px * $spacing) left ($timerleft + $timerwidth + 2 * $timerpadding + $spacing)
@@ -101,11 +97,27 @@ input[type=text]
   input { display: none }
   span { display: block }
 
+#new-task
+  absolute: bottom ($spacing / 2px) left $gridline
+
+#screen
+  fixed: top left
+  width: 100%
+  height: 100%
+  background: $lightgray
+  opacity: 0.666
+  z-index: 10
+  display: none
+
+  &.running
+    display: block
+
 #tasks
   clear: left
   list-style: none
   text-align: left
-  margin-top: $timerheight + (3.5px * $spacing)
+  margin-top: $timerheight + 6px * $spacing
+  z-index: 1
 
   li
     padding: ($spacing / 2px)
@@ -121,6 +133,7 @@ input[type=text]
 
     &.active
       background: $lightyeller
+      font-weight: bold
       .cursor { opacity: 1.0 }
 
     &.editing
@@ -166,25 +179,20 @@ input[type=text]
       &.finish { color: $green }
 
     .tomatoes
-      float: right
+      absolute: top right
 
       span
         display: block
+        float: right
         width: $spacing
         height: $spacing
         background: $tomato
         border-radius: $spacing
         margin-right: ($spacing / 2px)
 
-#new-task
-  margin-left: $gridline
-
-#tasks > li:first-child
-  margin-bottom: 15px
-
 #about
-  absolute: top $spacing left $spacing
-  z-index: 100
+  fixed: top $spacing left $spacing
+  z-index: 1000
   padding: $spacing
   background: $white
   width: 33em
@@ -204,3 +212,16 @@ input[type=text]
   cursor: pointer
   color: $darkgray
   &:hover { color: $black }
+
+::-webkit-scrollbar
+  height: 8px
+  width: 8px
+  overflow: visible
+::-webkit-scrollbar-button, ::-webkit-scrollbar-corner
+  height: 0
+  width: 0
+::-webkit-scrollbar-thumb
+  border-radius: $spacing
+  background: rgba(0, 0, 0, 0.5)
+::-webkit-scrollbar-track-piece
+  background-color: $brightwhite

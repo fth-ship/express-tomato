@@ -36,13 +36,8 @@ class exports.Tasks extends Backbone.View
     view.bind 'task:start', @start
 
     el = view.render().el
-    $(@el).find('li').first().after el
+    $(@el).prepend el
     $(el).removeClass 'active'
-
-    if @collection.length is 1
-      @select item.id
-    else
-      @selectNext()
 
   addAll: =>
     reversed = (item for item in @collection.models)
@@ -51,20 +46,33 @@ class exports.Tasks extends Backbone.View
     @setCursor @cursor
 
   setCursor: (c) =>
-    @$('li').eq(@cursor).removeClass 'active'
-    @cursor = c
-    @$('li').eq(@cursor).addClass 'active'
+    @$('li').eq(@cursor - 1).removeClass 'active'
+
+    @cursor = Math.min c, @collection.length
+
+    el = @$('li').eq @cursor - 1
+    el.addClass 'active'
+
+    hh = $('#header').height()
+    wh = $(window).height()
+    elTop = el.offset().top
+    elBottom = elTop + el.height()
+    winTop = $(window).scrollTop() + hh
+    winBottom = winTop + wh - hh
+    $(window).scrollTop(elBottom - wh + 20) if elBottom > winBottom
+    $(window).scrollTop elTop - hh if elTop < winTop
+
     Backbone.history.navigate '' + @cursor
 
   selected: =>
     @collection.at @cursor - 1
 
   selectPrev: =>
-    return if @cursor is 1
+    return if @cursor <= 1
     @setCursor @cursor - 1
 
   selectNext: =>
-    return if @cursor is @collection.length
+    return if @cursor >= @collection.length
     @setCursor @cursor + 1
 
   select: (id) =>
