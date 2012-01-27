@@ -26,7 +26,7 @@ html(lang='en')
       });
     title #{tomato.slug} | Tomato
   body
-    #about(onclick='javascript:$("#about").fadeOut(300)')
+    #about.modal
       .ps
         p.
           Welcome! This is a browser-based tool for keeping track of tasks and
@@ -54,11 +54,17 @@ html(lang='en')
           you think of it! Email me at leif@leifjohnson.net, or <a target="_blank"
           href="http://github.com/lmjohns3/express-tomato">check out the code</a>.
 
-      button OK
+      button(onclick='javascript:$("#about").fadeOut(300)') OK
+
+    #settings.modal
+      p: b Settings!
+
+      button(onclick='javascript:$("#settings").fadeOut(300)') Done
 
     #app
       #header
-        a#halp(onclick='javascript:$("#about").fadeIn(300)') Help
+        a#halp.tool-button(onclick='javascript:$("#about").fadeToggle(300)') ?
+        a#config.tool-button(onclick='javascript:$("#settings").fadeToggle(300)') &#x2699
         #fmogh: a(target='_blank', href='http://github.com/lmjohns3/express-tomato') FMOGH
         #timer
         #title

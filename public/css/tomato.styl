@@ -33,6 +33,19 @@ $darkgray = #666
 $tomato = #c30
 $green = #090
 
+::-webkit-scrollbar
+  height: 8px
+  width: 8px
+  overflow: visible
+::-webkit-scrollbar-button, ::-webkit-scrollbar-corner
+  height: 0
+  width: 0
+::-webkit-scrollbar-thumb
+  border-radius: $spacing
+  background: rgba(0, 0, 0, 0.5)
+::-webkit-scrollbar-track-piece
+  background-color: $brightwhite
+
 body
   font: $spacing/1 "Droid Sans", sans-serif
   margin: 0
@@ -179,7 +192,7 @@ input[type=text]
       &.finish { color: $green }
 
     .tomatoes
-      absolute: top right
+      absolute: top ($spacing / 2px) right (2px * $spacing)
 
       span
         display: block
@@ -188,9 +201,9 @@ input[type=text]
         height: $spacing
         background: $tomato
         border-radius: $spacing
-        margin-right: ($spacing / 2px)
+        margin-right: 2px
 
-#about
+.modal
   fixed: top $spacing left $spacing
   z-index: 1000
   padding: $spacing
@@ -207,21 +220,13 @@ input[type=text]
   button
     smooth-button()
 
-#halp
-  absolute: top $spacing right (7px * $spacing)
+.tool-button
   cursor: pointer
   color: $darkgray
   &:hover { color: $black }
 
-::-webkit-scrollbar
-  height: 8px
-  width: 8px
-  overflow: visible
-::-webkit-scrollbar-button, ::-webkit-scrollbar-corner
-  height: 0
-  width: 0
-::-webkit-scrollbar-thumb
-  border-radius: $spacing
-  background: rgba(0, 0, 0, 0.5)
-::-webkit-scrollbar-track-piece
-  background-color: $brightwhite
+#halp
+  absolute: bottom ($spacing / 2px) right ($spacing / 2px)
+
+#config
+  absolute: bottom ($spacing / 2px) right (3px * $spacing / 2px)
