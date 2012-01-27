@@ -35,3 +35,6 @@ class exports.Task extends Backbone.Model
     json.escapedName = @escape 'name'
     json.timestamp = formatDate json.finishedAt or json.createdAt
     return json
+
+  hideUnlessMatch: (regexp) ->
+    @set hidden: not regexp.test @get 'name'

@@ -29,6 +29,11 @@ class exports.Task extends Backbone.View
     else
       $(@el).removeClass 'finished'
 
+    if @model.get 'hidden'
+      $(@el).addClass 'hidden'
+    else
+      $(@el).removeClass 'hidden'
+
     name = @model.get 'name'
 
     @$('.name').text name

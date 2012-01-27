@@ -161,6 +161,9 @@ input[type=text]
       .finish { opacity: 1.0 }
       .cursor, .remove { visibility: hidden }
 
+    &.hidden
+      display: none
+
     .timestamp
       display: none
       float: left
@@ -226,7 +229,11 @@ input[type=text]
   &:hover { color: $black }
 
 #halp
-  absolute: bottom ($spacing / 2px) right ($spacing / 2px)
+  absolute: bottom (0.75px * $spacing) right (0.5px * $spacing)
 
 #config
-  absolute: bottom ($spacing / 2px) right (3px * $spacing / 2px)
+  absolute: bottom (0.85px * $spacing) right (1.5px * $spacing)
+
+#filter
+  absolute: bottom ($spacing / 2px) right (2.5px * $spacing)
+  font-size: smaller

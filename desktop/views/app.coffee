@@ -8,8 +8,9 @@ class exports.App extends Backbone.View
   el: $('#app')
 
   events:
+    'keyup #filter': 'filterKeyUp'
     'keypress #new-task': 'newTaskKeyPressed'
-    'blur #new-task': 'newTaskBlur'
+    'blur input': 'focusBody'
 
   initialize: ->
     Backbone.history or= new Backbone.History
@@ -59,12 +60,18 @@ class exports.App extends Backbone.View
           $('#new-task').focus()
           return
 
+  focusBody: -> $('body').focus()
+
   keyPressed: (e) =>
     return if e.target.value? or @timer.isRunning()
     console.log e.which, String.fromCharCode e.which
 
     if e.which in [61, 43] # [+, =]
       $('#new-task').focus()
+      return false
+
+    if e.which is 47 # /
+      $('#filter').focus()
       return false
 
     if e.which is 107 # j
@@ -95,5 +102,7 @@ class exports.App extends Backbone.View
     @collection.create name: name, order: order - 1
     $('#new-task').val ''
 
-  newTaskBlur: ->
-    $('body').focus()
+  filterKeyUp: (e) ->
+    regexp = new RegExp $('#filter').val().replace /^\s+|\s+$/g, ''
+    console.log regexp
+    @collection.each (i) -> i.hideUnlessMatch regexp
