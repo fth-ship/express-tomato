@@ -71,7 +71,7 @@ class exports.App extends Backbone.View
       return false
 
     if e.which is 47 # /
-      $('#filter').focus()
+      $('#filter').focus().select()
       return false
 
     if e.which is 107 # j
@@ -103,6 +103,8 @@ class exports.App extends Backbone.View
     $('#new-task').val ''
 
   filterKeyUp: (e) ->
-    regexp = new RegExp $('#filter').val().replace /^\s+|\s+$/g, ''
-    console.log regexp
-    @collection.each (i) -> i.hideUnlessMatch regexp
+    return $('#filter').blur() if e.keyCode is 13
+    escape = (s) -> s.replace /[-[\]{}()*+?.,\\^$|\#]/g, '\\$&'
+    q = $('#filter').val().replace /^\s+|\s+$/g, ''
+    re = new RegExp (escape(p) for p in q.split /\s+/).join '|'
+    @collection.each (i) -> i.hideUnlessMatch re
