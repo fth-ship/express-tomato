@@ -11,7 +11,7 @@ class exports.Tasks extends Backbone.Collection
       return ((p for i in [0...(n - s.length)]).concat [s]).join ''
 
     [
-      if task.isFinished() then '0' else '1'
+      if task.isFinished() then '1' else '0'
       lpad 16, '0', task.get 'order'
       task.get 'createdAt'
     ].join '-'
