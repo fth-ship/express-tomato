@@ -19,11 +19,13 @@ class exports.Task extends Backbone.Model
     toms = @get 'tomatoes'
     toms.push Date.now()
     @save tomatoes: toms
+    @trigger 'change'
 
   removeTomato: (index) ->
     toms = @get 'tomatoes'
     i = if index? then index else toms.length - 1
     @save tomatoes: toms[0...i].concat toms[i+1...]
+    @trigger 'change'
 
   toTemplate: ->
     formatDate = (d) ->
