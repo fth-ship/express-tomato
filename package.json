@@ -2,7 +2,7 @@
   "name": "lmj-tomato",
   "description": "pomodoro app for node.js",
   "author": "Leif Johnson <leif@leifjohnson.net>",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "repository": {
     "type": "git",
     "url": "git://github.com/lmjohns3/express-tomato.git"
