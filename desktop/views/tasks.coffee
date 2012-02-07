@@ -31,6 +31,8 @@ class exports.Tasks extends Backbone.View
     $(@el).prepend el
     $(el).removeClass 'active'
 
+    Backbone.history.navigate '' + (@cursor + 1)
+
   addAll: =>
     reversed = (item for item in @collection.models)
     while item = reversed.pop()
@@ -38,11 +40,14 @@ class exports.Tasks extends Backbone.View
     @setCursor @cursor
 
   setCursor: (c) =>
-    @$('li').eq(@cursor - 1).removeClass 'active'
+    @$('li').removeClass 'active'
 
-    @cursor = Math.min c, @collection.length
+    @cursor = Math.max 1, Math.min c, @collection.length
 
     el = @$('li').eq @cursor - 1
+    return unless el.length is 1
+    el = $(el[0])
+
     el.addClass 'active'
 
     hh = $('#header').height()
@@ -68,10 +73,11 @@ class exports.Tasks extends Backbone.View
     @setCursor @cursor + 1
 
   select: (id) =>
-    @collection.each (task, i) =>
+    for task, i in @collection.models
       if task.id is id
         @setCursor i + 1
         @render()
+        break
 
   start: (id) =>
     @select id

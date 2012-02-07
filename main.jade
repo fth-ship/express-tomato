@@ -4,7 +4,7 @@ html(lang='en')
     meta(charset='utf-8')
     meta(name='description', content='Use the Pomodoro Technique to organize and track your tasks, all from a browser window. Incorporate work and breaks easily into your schedule!')
     meta(name='keywords', content='pomodoro technique, task list, time management')
-    link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Droid+Serif')
+    link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Rosario|Inconsolata')
     link(rel='stylesheet', type='text/css', href='#{basepath}/css/tomato.css')
     script(src='#{basepath}/desktop.js')
     - if (analytics)
@@ -46,13 +46,15 @@ html(lang='en')
           time, you'll be able to see the tasks you've completed, and how many
           "tomatoes" they've each needed.
         p.
-          You can use the keyboard, too. J and K move the cursor up and down the
-          task list. F marks a task as finished. + adds a new task. Enter starts
-          the timer.
+          You can use the keyboard, too: <b>+</b> adds a new task, <b>/</b>
+          filters the task list, <b>space bar</b> starts the timer for the
+          current task, <b>J</b> and <b>K</b> move the cursor up and down the
+          task list, <b>F</b> marks the current task as finished, and
+          <b>enter</b> edits the current task.
         p.
           This tool is very much a work in progress. I would enjoy hearing what
           you think of it! Email me at leif@leifjohnson.net, or <a target="_blank"
-          href="http://github.com/lmjohns3/express-tomato">check out the code</a>.
+          href="http://github.com/lmjohns3/express-tomato">fork the code</a>.
 
       button(onclick='javascript:$("#about").fadeOut(300)') OK
 
@@ -78,8 +80,7 @@ html(lang='en')
     script(type='text/template', id='task-template')
       .icon.cursor(title='make this the current task') &#x261e;
       .icon.finish(title='mark this task as finished') &#x2714;
-      //.icon.timer &#x272a;
-      .icon.remove(title='remove this task entirely') &#x2718;
+      .icon.remove(title='remove this task') &#x2718;
       .timestamp <%= timestamp %>
       input.input(type='text', value='', size='25')
       .name <%= escapedName %>

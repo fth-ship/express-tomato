@@ -97,7 +97,8 @@ class exports.App extends Backbone.View
   newTaskKeyPressed: (e) ->
     v = $('#new-task').val()
     return unless e.keyCode is 13 and /\S+/.test v
-    order = @collection.first().get 'order'
+    first = @collection.first()
+    order = if first then first.get('order') else 1
     name = v.replace /^\s+|\s+$/g, ''
     @collection.create name: name, order: order - 1
     $('#new-task').val ''
