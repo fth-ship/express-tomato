@@ -26,7 +26,8 @@ class exports.Title extends Backbone.View
     @input.select()
 
   close: ->
-    @model.save slug: @input.val()
+    params = slug: @input.val()
+    @model.save params, wait: true
     $(@el).removeClass 'editing'
 
   updateOnEnter: (e) ->

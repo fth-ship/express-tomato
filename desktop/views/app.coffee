@@ -98,9 +98,10 @@ class exports.App extends Backbone.View
     v = $('#new-task').val()
     return unless e.keyCode is 13 and /\S+/.test v
     first = @collection.first()
-    order = if first then first.get('order') else 1
-    name = v.replace /^\s+|\s+$/g, ''
-    @collection.create name: name, order: order - 1
+    data =
+      order: if first then first.get('order') - 1 else 0
+      name: v.replace /^\s+|\s+$/g, ''
+    @collection.create data, wait: true
     $('#new-task').val ''
 
   filterKeyUp: (e) ->

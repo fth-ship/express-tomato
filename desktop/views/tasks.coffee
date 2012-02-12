@@ -27,11 +27,9 @@ class exports.Tasks extends Backbone.View
     view.bind 'task:select', @select
     view.bind 'task:start', @start
 
-    el = view.render().el
-    $(@el).prepend el
-    $(el).removeClass 'active'
+    $(@el).prepend view.render().el
 
-    Backbone.history.navigate '' + (@cursor + 1)
+    @setCursor if @collection.length is 1 then 1 else @cursor + 1
 
   addAll: =>
     reversed = (item for item in @collection.models)
@@ -59,7 +57,7 @@ class exports.Tasks extends Backbone.View
     $(window).scrollTop(elBottom - wh + 20) if elBottom > winBottom
     $(window).scrollTop elTop - hh if elTop < winTop
 
-    Backbone.history.navigate '' + @cursor
+    Backbone.history.navigate "#{@cursor}"
 
   selected: =>
     @collection.at @cursor - 1
