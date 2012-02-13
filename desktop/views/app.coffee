@@ -1,4 +1,4 @@
-timer_model = require 'models/timer'
+timers = require 'models/timer'
 
 tasks = require 'views/tasks'
 timer = require 'views/timer'
@@ -15,7 +15,8 @@ class exports.App extends Backbone.View
   initialize: ->
     Backbone.history or= new Backbone.History
 
-    @timer = new timer_model.Timer(tomato: @model)
+    @timer = new timers.Timer(tomato: @model)
+
     @timerView = new timer.Timer(model: @timer)
     @timerView.render()
 
@@ -52,12 +53,13 @@ class exports.App extends Backbone.View
     return $('#about').hide().fadeIn(300) if tasks.length is 0
     workSec = @model.get 'workSec'
     now = Date.now()
-    tasks.each (task) =>
+    tasks.each (task, i) =>
       for tom in task.get('tomatoes') or []
         elapsedSec = (now - new Date tom) / 1000
         if elapsedSec < workSec
           @timer.set flavor: 'work', seconds: Math.round workSec - elapsedSec
           @timer.start silent: true
+          @tasks.setCursor i + 1
           $('#new-task').focus()
           return
 

@@ -22,19 +22,21 @@ class exports.Tasks extends Backbone.View
     @$('li.task').each (i, item) =>
       @collection.get($(item).attr('id')).save order: i
 
-  addOne: (item) =>
+  addItem: (item) ->
     view = new task.Task(model: item)
     view.bind 'task:select', @select
     view.bind 'task:start', @start
 
     $(@el).prepend view.render().el
 
+  addOne: (item) =>
+    @addItem item
     @setCursor if @collection.length is 1 then 1 else @cursor + 1
 
   addAll: =>
     reversed = (item for item in @collection.models)
     while item = reversed.pop()
-      @addOne item
+      @addItem item
     @setCursor @cursor
 
   setCursor: (c) =>
