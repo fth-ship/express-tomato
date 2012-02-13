@@ -71,5 +71,5 @@ class exports.Task extends Backbone.View
     @trigger 'task:select', @model.id
 
   triggerStart: ->
-    return if @model.isFinished()
+    return if @model.isFinished() or $(@el).hasClass 'editing'
     @trigger 'task:start', @model.id
