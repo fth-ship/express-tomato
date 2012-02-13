@@ -32,8 +32,9 @@ class exports.App extends Backbone.View
 
     $(document).bind 'keypress', @keyPressed
 
-  redirect: (model, slug) =>
-    document.location.href = "#{@model.get 'basepath'}/#{encodeURIComponent slug}"
+  redirect: =>
+    slug = encodeURIComponent @model.get 'slug'
+    document.location.href = "#{@model.get 'basepath'}/#{slug}"
 
   timerStarted: =>
     $('#new-task').focus()

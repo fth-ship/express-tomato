@@ -26,9 +26,10 @@ class exports.Title extends Backbone.View
     @input.select()
 
   close: ->
-    params = slug: @input.val()
-    @model.save params, wait: true
     $(@el).removeClass 'editing'
+    data = slug: @input.val()
+    wait = wait: true
+    @model.save data, wait
 
   updateOnEnter: (e) ->
-    @close() if e.keyCode is 13
+    @input.blur() if e.keyCode is 13
