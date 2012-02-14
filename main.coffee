@@ -239,6 +239,5 @@ module.exports.middleware = (options) ->
 
 
 unless module.parent
-  app = exports.middleware()
-  app.listen 3000
+  exports.middleware().listen 3000
   console.log 'tomato server listening on http://localhost:3000'
