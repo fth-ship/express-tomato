@@ -140,13 +140,16 @@ input[type=text]
     clear: both
     height: 1.1px * $spacing
 
+    &:nth-child(even)
+      background: #eee
+
   li.task
     &:hover
       cursor: move
       .icon { opacity: 0.3 }
 
     &.active
-      background: darken($tomato, 70%)
+      background: darken($tomato, 60%)
       color: $white
       .cursor { opacity: 1.0 }
 
