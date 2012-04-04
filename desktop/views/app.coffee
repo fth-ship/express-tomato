@@ -35,6 +35,7 @@ class exports.App extends Backbone.View
 
   redirect: =>
     slug = encodeURIComponent @model.get 'slug'
+    console.log 'redirecting to', slug
     document.location.href = "#{@model.get 'basepath'}/#{slug}"
 
   timerStarted: =>
