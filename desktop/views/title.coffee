@@ -28,8 +28,8 @@ class exports.Title extends Backbone.View
   close: ->
     $(@el).removeClass 'editing'
     data = slug: @input.val()
-    wait = wait: true
-    @model.save data, wait
+    opts = wait: true
+    @model.save data, opts
 
   updateOnEnter: (e) ->
     @input.blur() if e.keyCode is 13

@@ -7,3 +7,4 @@ class exports.Tomato extends Backbone.Model
 
   initialize: ->
     @id = @get 'slug'
+    console.log 'initialized tomato model', @
