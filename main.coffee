@@ -42,9 +42,9 @@ module.exports.middleware = (options) ->
   desktop.compile (err, source) ->
     {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
     minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
-    fs.writeFile "#{__dirname}/public/desktop.js", minified, (err) ->
+    fs.writeFile "#{__dirname}/public/tomato-desktop.js", minified, (err) ->
       throw err if err
-      console.log 'compiled desktop.js'
+      console.log "compiled #{__dirname}/public/tomato-desktop.js"
 
   NOTPRESENT = '.>,I/-rFhdauIC@P*w~29r0X#%*+HPW?nMQ%F/P|>mW%)XyX+eRo$({8H8q!~Vr{|?U4/;;d`A_/K;gX'
 
