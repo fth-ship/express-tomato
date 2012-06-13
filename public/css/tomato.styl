@@ -17,7 +17,6 @@ $spacing = 18px
 $gridline = unit(3 * $spacing, px)
 
 $timerpadding = unit(2 * $spacing, px)
-$timerleft = unit($gridline + $spacing / 2 - $timerpadding, px)
 $timerwidth = unit(10 * $spacing, px)
 $timerheight = unit(4 * $spacing, px)
 
@@ -85,7 +84,7 @@ input[type=text]
   font-size: unit(4 * $spacing, px)
   font-family: Inconsolata, Consolata, monospace
   text-align: center
-  absolute: top $spacing left unit($gridline + 1.5 * $spacing, px)
+  absolute: top $spacing left unit($gridline, px)
   padding: $spacing $timerpadding
   border-radius: unit(2 * $spacing, px)
   color: $white
@@ -99,7 +98,7 @@ input[type=text]
 
 #title
   cursor: pointer
-  absolute: top unit(3 * $spacing, px) left unit($timerleft + $timerwidth + 2 * $timerpadding + $spacing, px)
+  absolute: top unit(3 * $spacing, px) left unit($gridline + $timerwidth + 2 * $timerpadding + $spacing, px)
   feedback()
 
   &.editing
