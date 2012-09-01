@@ -33,10 +33,8 @@ module.exports.middleware = (options) ->
   desktop = stitch.createPackage
     paths: ["#{__dirname}/desktop"]
     dependencies: [
-      "#{__dirname}/public/js/jquery.js"
-      "#{__dirname}/public/js/jquery-ui.js"
-      "#{__dirname}/public/js/underscore.js"
-      "#{__dirname}/public/js/backbone.js"
+      "#{__dirname}/public/underscore-min.js"
+      "#{__dirname}/public/backbone-min.js"
       ]
 
   desktop.compile (err, source) ->
