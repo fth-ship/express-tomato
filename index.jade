@@ -1,0 +1,61 @@
+!!! 5
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='description', content='Use the Pomodoro Technique to organize and track your tasks, all from a browser window. Incorporate work and breaks easily into your schedule!')
+    meta(name='keywords', content='pomodoro technique, task list, time management')
+    link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/css/bootstrap.no-icons.min.css')
+    link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/font-awesome/2.0/css/font-awesome.css')
+    link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Rosario|Inconsolata')
+    link(rel='stylesheet', type='text/css', href='#{basepath}/css/tomato.css')
+    - if (analytics)
+      script
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '#{analytics}']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    title Tomato
+  body
+    .container
+      .navbar
+      .row
+        h1.span12.
+          Welcome!
+      .row
+        h3.span12.
+          This is a browser-based tool for using the <a
+          href="http://www.pomodorotechnique.com" target="_blank">Pomodoro
+          Technique</a>.
+      .row
+        h3.span12.
+          To get started, just enter the name of a task list.
+      .row
+        p.span12 &nbsp;
+      .row
+        form.span12.form-horizontal(action='.', method='post')
+          .control-group
+            label.control-label(for='slug') My task list is
+            .controls
+              input#slug.span3(type='text', name='slug')
+          .control-group
+            label.control-label(for='workMin') I'll work for
+            .controls
+              input#workMin.span1(type='text', name='workMin', value='25')
+              span(style='padding-left:10px') minutes at a time
+          .control-group
+            label.control-label(for='workMin') And break for
+            .controls
+              input#breakMin.span1(type='text', name='breakMin', value='5')
+              span(style='padding-left:10px') minutes at a time
+          .control-group
+            .controls
+              input.btn.btn-primary(type='submit') Get Started
+    script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js')
+    script(src='//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js')
+    script(src='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/js/bootstrap.min.js')
+    script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js')
+    script(src='#{basepath}/desktop.js')

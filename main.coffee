@@ -19,88 +19,92 @@
 # SOFTWARE.
 
 _ = require 'underscore'
-crypto = require 'crypto'
 express = require 'express'
 fs = require 'fs'
-mongoose = require 'mongoose'
 nib = require 'nib'
+sqlz = require 'sequelize'
 stitch = require 'stitch'
 stylus = require 'stylus'
 uglify = require 'uglify-js'
 
 
 module.exports.middleware = (options) ->
-  desktop = stitch.createPackage
-    paths: ["#{__dirname}/desktop"]
-    dependencies: [
-      "#{__dirname}/public/js/jquery.js"
-      "#{__dirname}/public/js/jquery-ui.js"
-      "#{__dirname}/public/js/underscore.js"
-      "#{__dirname}/public/js/backbone.js"
-      ]
+  jsapp = stitch.createPackage
+    paths: ["#{__dirname}/app"]
+    dependencies: []
 
-  desktop.compile (err, source) ->
+  jsapp.compile (err, source) ->
     {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
     minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
-    fs.writeFile "#{__dirname}/public/desktop.js", minified, (err) ->
+    fs.writeFile "#{__dirname}/public/app.js", minified, (err) ->
       throw err if err
-      console.log 'compiled desktop.js'
+      console.log 'compiled app.js'
 
-  # set up a private string to detect values that aren't present during POSTs
-  ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-'
-  rc = -> ALPHA[Math.floor Math.random() * ALPHA.length]
-  NOTPRESENT = (rc() for x in [0...100]).join ''
+  db = new sqlz '', '', '', dialect: 'sqlite', storage: options?.db or 'tomato.db'
 
-  TIMERS = _.extend { workSec: 25 * 60, breakSec: 5 * 60 }, options?.timers
+  # MODELS
 
-  mongoose.connect options?.db or 'mongodb://localhost/tomato'
+  # works are individual work units -- something contributed to a task
+  Work = db.define 'Work'
+    id:
+      type: sqlz.INTEGER
+      primaryKey: true
 
   # tasks are individual line items in a tomato -- something to be accomplished
-  TaskSchema = new mongoose.Schema
-    id: String
-    name: String
+  Task = db.define 'Task'
+    name:
+      type: sqlz.STRING
+      allowNull: false
+      unique: true
     order:
-      type: Number
-      default: 0
-      min: -1e100
-      max: 1e100
-    createdAt: Date
-    updatedAt: Date
-    finishedAt: Date
-    tomatoes: [
-      startedAt: Date
-      finishedAt: Date
-    ]
+      type: sqlz.INTEGER
+      allowNull: false
+      defaultValue: 0
+    priority:
+      type: sqlz.INTEGER
+      allowNull: false
+      defaultValue: 0
+      validate: min: 0
+    difficulty:
+      type: sqlz.INTEGER
+      allowNull: false
+      defaultValue: 0
+      validate: min: 0
+    finishedAt: sqlz.DATE
+
+  Task.hasMany Work
 
   # breaks are just labeled segments of time
-  BreakSchema = new mongoose.Schema
-    startedAt: Date
-    finishedAt: Date
-    flavor: String
+  Break = db.define 'Break'
+    name: sqlz.STRING
 
-  # a tomato is pretty much a list of tasks and a list of breaks -- a todo list
-  TomatoSchema = new mongoose.Schema
+  # a tomato is a list of tasks and a list of breaks
+  Tomato = db.define 'Tomato'
+    user: sqlz.STRING
     slug:
-      type: String
+      type: sqlz.STRING
+      allowNull: false
       unique: true
-      trim: true
-      match: /^[^\/]+$/
+      validate: regex: /^[^\/]+$/
     workSec:
-      type: Number
-      min: 1
+      type: sqlz.INTEGER
+      allowNull: false
+      validate: min: 1
     breakSec:
-      type: Number
-      min: 1
-    createdAt: Date
-    updatedAt: Date
-    tasks: [ TaskSchema ]
-    breaks: [ BreakSchema ]
+      type: sqlz.INTEGER
+      allowNull: false
+      validate: min: 1
 
-  Task = mongoose.model 'Task', TaskSchema
-  Break = mongoose.model 'Break', BreakSchema
-  Tomato = mongoose.model 'Tomato', TomatoSchema
+  Tomato.hasMany Task
+  Tomato.hasMany Break
 
-  app = express.createServer()
+  db.sync().error (err) ->
+    console.log err
+    process.exit()
+
+  # APP
+
+  app = express()
 
   app.configure 'development', ->
     app.use express.errorHandler dumpExceptions: true, showStack: true
@@ -122,197 +126,141 @@ module.exports.middleware = (options) ->
     app.use express.static "#{__dirname}/public"
     app.use app.router
 
-  app.get '/desktop.js', desktop.createServer()
+  app.get '/app.js', jsapp.createServer()
 
-  # GET / -- create a new tomato
+  # PARAMS
+
+  app.param 'tomato', (req, res, next, slug) ->
+    Tomato.find(where: slug: slug)
+      .error(next)
+      .success (tomato) ->
+        return res.send(404) unless tomato
+        req.tomato = tomato
+        next()
+
+  app.param 'task', (req, res, next, id) ->
+    req.tomato.getTasks(where: id: id)
+      .error(next)
+      .success (ts) ->
+        return res.send(404) unless ts.length is 1
+        req.task = ts[0]
+        next()
+
+  app.param 'break', (req, res, next, id) ->
+    req.tomato.getBreaks(where: id: id)
+      .error(next)
+      .success (bs) ->
+        return res.send(404) unless bs.length is 1
+        req.brake = bs[0]
+        next()
+
+  # ROUTES
+
+  # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
-    id = (rc() for x in [0...16]).join ''
-    now = Date.now()
-    tomato = slug: id, createdAt: now, updatedAt: now, tasks: []
-    new Tomato(_.extend tomato, TIMERS).save (err) ->
-      return res.send(err, 500) if err
-      res.redirect "/#{id}"
-
-  # TOMATO routes
-
-  fetchTomato = (req, res, next) ->
-    conditions = slug: req.param 'tomato'
-    fields = ['slug', 'workSec', 'breakSec', 'updatedAt']
-    Tomato.findOne conditions, fields, (err, tomato) ->
-      return res.send(err, 500) if err
-      return res.send(404) unless tomato
-      res.locals tomato: tomato
-      next()
-
-  # GET /:tomato -- return the html to drive the client-side tomato app
-  app.get '/:tomato', fetchTomato, (req, res) ->
     ctx =
       analytics: options?.analytics
       basepath: (app.settings.basepath or '').replace /\/$/, ''
+    res.render 'index', ctx
+
+  # POST / -- create a new tomato
+  app.post '/', (req, res) ->
+    slug = req.param 'slug'
+    Tomato.create(
+      slug: slug
+      workSec: 60 * req.param 'workMin'
+      breakSec: 60 * req.param 'breakMin'
+    )
+      .error((err) -> res.send 500, err)
+      .success(-> res.redirect "/#{slug}")
+
+  # GET /:tomato -- return the html to drive the client-side tomato app
+  app.get '/:tomato', (req, res) ->
+    # keep the database clean by removing rotten tomatoes.
+    Tomato.findAll(where: ['updatedAt < ?', Date.now() - 1000 * 86400 * 100])
+      .success((ts) -> t.destroy() for t in ts)
+    ctx =
+      analytics: options?.analytics
+      basepath: (app.settings.basepath or '').replace /\/$/, ''
+      tomato: req.tomato
     res.render 'main', ctx
 
   # PUT /:tomato -- update the id, name, etc. of a tomato
-  app.put '/:tomato', fetchTomato, (req, res) ->
-    tomato = res.local 'tomato'
-    now = Date.now()
-    for key in ['slug', 'workSec', 'breakSec']
-      value = req.param key, NOTPRESENT
-      if value isnt NOTPRESENT
-        tomato.set key, value
-        tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send 200
+  app.put '/:tomato', (req, res) ->
+    fields = ['slug', 'workSec', 'breakSec']
+    req.tomato.updateAttributes(req.body, fields)
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   # DELETE /:tomato -- delete a tomato and all tasks and breaks
   app.del '/:tomato', (req, res) ->
-    Tomato.remove { slug: req.param 'tomato' }, (err) ->
-      return res.send(err, 500) if err
-      res.send 200
-
-  # TASK routes
-
-  fetchTasks = (req, res, next) ->
-    conditions = slug: req.param 'tomato'
-    fields = ['slug', 'updatedAt', 'tasks']
-    Tomato.findOne conditions, fields, (err, tomato) ->
-      return res.send(err, 500) if err
-      return res.send(404) unless tomato
-      res.locals tomato: tomato
-      next()
-
-  fetchTask = (req, res, next) ->
-    id = req.param 'task'
-    conditions = slug: req.param 'tomato'
-    fields = ['slug', 'updatedAt', 'tasks']
-    Tomato.findOne conditions, fields, (err, tomato) ->
-      return res.send(err, 500) if err
-      return res.send(404) unless tomato
-      task = _.find tomato.tasks, (t) -> t.id is id
-      return res.send(404) unless task?
-      res.locals tomato: tomato, task: task
-      next()
+    req.tomato.destroy()
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   # GET /:tomato/tasks -- get all tasks for a tomato
-  app.get '/:tomato/tasks', fetchTasks, (req, res) ->
-    res.send res.local('tomato').tasks
+  app.get '/:tomato/tasks', (req, res) ->
+    req.tomato.getTasks()
+      .error((err) -> res.send 500, err)
+      .success((ts) -> res.send ts)
 
   # POST /:tomato/tasks -- create a new task for a tomato
-  app.post '/:tomato/tasks', fetchTasks, (req, res) ->
-    hash = (s) ->
-      h = crypto.createHash 'md5'
-      h.update s
-      return h.digest 'hex'
-
-    tomato = res.local 'tomato'
-    name = req.param 'name'
-    now = Date.now()
-    task =
-      id: hash "#{now}:#{name}"
-      name: name
-      order: req.param('order')
-      createdAt: now
-      updatedAt: now
+  app.post '/:tomato/tasks', (req, res) ->
+    Task.create(
+      TomatoId: req.tomato.id
+      name: req.param 'name'
+      order: req.param 'order'
+      priority: req.param 'priority'
+      difficulty: req.param 'difficulty'
       finishedAt: null
-    tomato.tasks.push task
-    tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send task
+    )
+      .error((err) -> res.send 500, err)
+      .success((t) -> res.send t)
 
   # GET /:tomato/tasks/:task -- return data for a task
-  app.get '/:tomato/tasks/:task', fetchTask, (req, res) ->
-    res.send res.local 'task'
+  app.get '/:tomato/tasks/:task', (req, res) ->
+    res.send req.task
 
   # PUT /:tomato/tasks/:task -- update data for a task
-  app.put '/:tomato/tasks/:task', fetchTask, (req, res) ->
-    tomato = res.local 'tomato'
-    task = res.local 'task'
-    now = Date.now()
-    for key in ['name', 'order', 'finishedAt', 'tomatoes']
-      value = req.param key, NOTPRESENT
-      if value isnt NOTPRESENT
-        task.set key, value
-        task.set 'updatedAt', now
-        tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send 200
+  app.put '/:tomato/tasks/:task', (req, res) ->
+    fields = ['name', 'order', 'priority', 'difficulty', 'finishedAt']
+    req.task.updateAttributes(req.body, fields)
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   # DELETE /:tomato/tasks/:task -- remove a task
-  app.del '/:tomato/tasks/:task', fetchTasks, (req, res) ->
-    tomato = res.local 'tomato'
-    now = Date.now()
-    index = _.indexOf _.pluck(tomato.tasks, 'id'), req.param 'task'
-    tomato.tasks.splice index, 1
-    tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send 200
-
-  # BREAK routes
-
-  fetchBreaks = (req, res, next) ->
-    conditions = slug: req.param 'tomato'
-    fields = ['slug', 'updatedAt', 'breaks']
-    Tomato.findOne conditions, fields, (err, tomato) ->
-      return res.send(err, 500) if err
-      return res.send(404) unless tomato
-      res.locals tomato: tomato
-      next()
-
-  fetchBreak = (req, res, next) ->
-    id = req.param 'break'
-    conditions = slug: req.param 'tomato'
-    fields = ['slug', 'updatedAt', 'breaks']
-    Tomato.findOne conditions, fields, (err, tomato) ->
-      return res.send(err, 500) if err
-      return res.send(404) unless tomato
-      brake_ = _.find tomato.breaks, (t) -> t.id is id
-      return res.send(404) unless brake
-      res.locals tomato: tomato, break: brake
-      next()
+  app.del '/:tomato/tasks/:task', (req, res) ->
+    req.task.destroy()
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   # GET /:tomato/breaks -- get all breaks for a tomato
-  app.get '/:tomato/breaks', fetchBreaks, (req, res) ->
-    res.send res.local('tomato').breaks
+  app.get '/:tomato/breaks', (req, res) ->
+    req.tomato.getBreaks()
+      .error((err) -> res.send 500, err)
+      .success((bs) -> res.send bs)
 
   # POST /:tomato/breaks -- create a new break for a tomato
-  app.post '/:tomato/breaks', fetchBreaks, (req, res) ->
-    hash = (s) ->
-      h = crypto.createHash 'md5'
-      h.update s
-      return h.digest 'hex'
+  app.post '/:tomato/breaks', (req, res) ->
+    Break.create(TomatoId: req.tomato.id, name: req.param 'name')
+      .error((err) -> res.send 500, err)
+      .success((b) -> res.send b)
 
   # GET /:tomato/breaks/:break -- return data for a break
-  app.get '/:tomato/breaks/:break', fetchBreak, (req, res) ->
-    res.send res.local 'break'
+  app.get '/:tomato/breaks/:break', (req, res) ->
+    res.send req.brake
 
   # PUT /:tomato/breaks/:break -- update data for a break
-  app.put '/:tomato/breaks/:break', fetchBreak, (req, res) ->
-    tomato = res.local 'tomato'
-    brake = res.local 'break'
-    now = Date.now()
-    for key in ['name', 'order', 'finishedAt', 'tomatoes']
-      value = req.param key, NOTPRESENT
-      if value isnt NOTPRESENT
-        brake.set key, value
-        brake.set 'updatedAt', now
-        tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send 200
+  app.put '/:tomato/breaks/:break', (req, res) ->
+    req.brake.updateAttributes(req.body, ['name'])
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   # DELETE /:tomato/breaks/:break -- remove a break
-  app.del '/:tomato/breaks/:break', fetchBreaks, (req, res) ->
-    tomato = res.local 'tomato'
-    now = Date.now()
-    index = _.indexOf _.pluck(tomato.breaks, 'id'), req.param 'break'
-    tomato.breaks.splice index, 1
-    tomato.set 'updatedAt', now
-    tomato.save (err) ->
-      return res.send(err, 500) if err
-      res.send 200
+  app.del '/:tomato/breaks/:break', (req, res) ->
+    req.brake.destroy()
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
 
   return app
 

@@ -1,8 +1,5 @@
 @import 'nib'
 
-global-reset()
-reset-html5()
-
 feedback()
   cursor: pointer
   &:hover
@@ -14,14 +11,6 @@ timer(fg)
   &:hover
     background: lighten(fg, 10%)
     //linear-gradient(top, lighten(fg, 10%) 40%, fg 60%)
-
-$spacing = 18px
-$gridline = 2px * ($spacing * 1.5px)
-
-$timerpadding = 2px * $spacing
-$timerleft = $gridline + ($spacing / 2px) - $timerpadding
-$timerwidth = 10px * $spacing
-$timerheight = 4px * $spacing
 
 $black = #000
 $darkgray = #666
@@ -43,33 +32,17 @@ $tomato = darken(#c30, 10%)
   height: 0
   width: 0
 ::-webkit-scrollbar-thumb
-  border-radius: $spacing
+  border-radius: 20px
   background: rgba(0, 0, 0, 0.5)
 ::-webkit-scrollbar-track-piece
   background-color: $brightwhite
 
 body
-  font: $spacing/1 Rosario, sans-serif
-  margin: 0
-  padding: 0
+  font-family: Rosario
   overflow-x: hidden
 
-input[type=text]
-  font-size: $spacing
-  padding: 1px 3px
-  border: solid 1px lighten($tomato, 20%)
-  border-radius: 5px
-
-#header
-  fixed: top left
-  width: 100%
-  height: $timerheight + 6px * $spacing
-  box-shadow: 0 0 ($spacing / 2px) #000
-  background: $brightwhite
-  z-index: 100
-
 #fmogh
-  absolute: top (2px * $spacing) right -50px
+  absolute: top 40px right -50px
   transform: rotate(45deg)
   background: $white
   color: $brightwhite
@@ -77,23 +50,17 @@ input[type=text]
   &:hover
     background: linear-gradient(top, $tomato, darken($tomato, 30%))
   a
-    padding: ($spacing / 2px) ($spacing * 3)
+    padding: 10px 60px
     color: inherit
     background: inherit
     text-decoration: none
 
 #timer
-  width: $timerwidth
-  font-size: 4px * $spacing
+  font-size: 10em
+  height: 1em
+  padding-top: 0.5em
   font-family: Inconsolata, Consolata, monospace
-  text-align: center
-  absolute: top $spacing left ($gridline + ($spacing / 2px) - (2px * $spacing))
-  padding: $spacing $timerpadding
-  border-radius: 2px * $spacing
-  color: $white
   cursor: pointer
-  z-index: 10
-
   &.work
     timer($tomato)
   &.break
@@ -101,19 +68,15 @@ input[type=text]
 
 #title
   cursor: pointer
-  absolute: top (3px * $spacing) left ($timerleft + $timerwidth + 2 * $timerpadding + $spacing)
   feedback()
 
   &.editing
     input { display: block }
     span { display: none }
 
-  input, span { font-size: 2px * $spacing }
+  input, span { font-size: 40px }
   input { display: none }
   span { display: block }
-
-#new-task
-  absolute: bottom ($spacing / 2px) left $gridline
 
 #screen
   fixed: top left
@@ -128,17 +91,8 @@ input[type=text]
     display: block
 
 #tasks
-  clear: left
-  list-style: none
-  text-align: left
-  margin-top: $timerheight + 6px * $spacing
-  z-index: 1
-
   li
-    padding: ($spacing / 2px)
-    position: relative
-    clear: both
-    height: 1.1px * $spacing
+    height: 12px
 
     &:nth-child(even)
       background: #eee
@@ -175,7 +129,6 @@ input[type=text]
     .input
       display: none
       float: left
-      font-size: $spacing - 3px
 
     .name
       display: block
@@ -184,8 +137,8 @@ input[type=text]
 
     .icon
       cursor: pointer
-      width: $spacing
-      margin-right: ($spacing / 2px)
+      width: 20px
+      margin-right: 10px
       float: left
       opacity: 0.0
 
@@ -199,45 +152,11 @@ input[type=text]
       &.finish { color: $green }
 
     .tomatoes
-      absolute: top ($spacing / 2px) right (2px * $spacing)
-
       span
         display: block
         float: right
-        width: $spacing
-        height: $spacing
+        width: 20px
+        height: 20px
         background: $tomato
-        border-radius: $spacing
+        border-radius: 20px
         margin-right: 2px
-
-.modal
-  fixed: top $spacing left $spacing
-  z-index: 1000
-  padding: $spacing
-  background: $white
-  width: 33em
-  border-radius: $spacing
-  box-shadow: 0 0 ($spacing / 2px) $black
-  display: none
-
-  p
-    font: 16px/1.5 Rosario, sans-serif
-    margin-bottom: $spacing
-
-  button
-    smooth-button()
-
-.tool-button
-  cursor: pointer
-  color: $darkgray
-  &:hover { color: $black }
-
-#halp
-  absolute: bottom (0.75px * $spacing) right (0.5px * $spacing)
-
-#config
-  absolute: bottom (0.85px * $spacing) right (1.5px * $spacing)
-
-#filter
-  absolute: bottom ($spacing / 2px) right (2.5px * $spacing)
-  font-size: smaller

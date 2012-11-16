@@ -1,3 +1,4 @@
 *.css
 public/desktop.js
 node_modules
+*.db
