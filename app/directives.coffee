@@ -1,4 +1,4 @@
-tomatoTimer = ($timeout) ->
+clock = ($timeout) ->
   (scope, element, attrs) ->
     ringer = new Audio()
 
@@ -37,4 +37,4 @@ tomatoTimer = ($timeout) ->
 
 
 angular.module('app.directives', [])
-  .directive('tomatoTimer', tomatoTimer)
+  .directive('clock', clock)
