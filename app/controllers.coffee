@@ -1,21 +1,61 @@
-TomatoCtrl = ($scope, Tomato, Task, Break, Work) ->
+TimerCtrl = ($scope, Work, Break) ->
+  T = $scope.timer =
+    clock: 0
+    name: null
+    work: null
+    brake: null
+
+  E = $('#timer')
+  show = ->
+    E.modal('show').on 'hidden', ->
+      Work.remove(workId: T.work.id, taskId: T.work.taskId) if T.work
+      Brake.remove(breakId: T.brake.id) if T.brake
+
+  $scope.finishBreak = ->
+    T.brake.$save breakId: T.brake.id, ->
+      T.brake = null
+      E.modal('hide')
+
+  $scope.$on 'start:work', (event, work) ->
+    sec = 60 * $scope.tomato.workMin
+    elapsed = new Date() - new Date work.createdAt
+    T.clock = sec - Math.floor elapsed / 1000
+    T.work = work
+    T.brake = null
+    T.name = (t.name for t in $scope.tasks when t.id is work.taskId)[0]
+    show()
+
+  $scope.$on 'start:break', (event, brake) ->
+    elapsed = new Date() - new Date brake.createdAt
+    T.clock = Math.max 1, Math.floor elapsed / 1000
+    T.name = brake.name
+    T.work = null
+    T.brake = brake
+    show()
+
+TimerCtrl.$inject = ['$scope', 'Work', 'Break']
+
+
+TomatoCtrl = ($scope, Tomato, Task, Work, Break) ->
   $scope.tomato = Tomato.get()
   $scope.tasks = Task.query()
 
   $scope.breaks = Break.query ->
     for brake in $scope.breaks
       continue if brake.updatedAt > brake.createdAt
-      showBreakTimer brake
+      $scope.$broadcast 'start:break', brake
       break
 
   $scope.works = Work.query ->
-    workSec = 60 * $scope.tomato.workMin
-    post = new Date(new Date().getTime() - 1000 * workSec)
+    workMs = 60000 * $scope.tomato.workMin
+    earliest = new Date().getTime() - workMs
     for work in $scope.works
       continue unless work.createdAt is work.updatedAt
-      start = new Date(work.createdAt)
-      if start > post
-        showWorkTimer work
+      cr = new Date(work.createdAt).getTime()
+      if cr < earliest
+        work.$remove(workId: work.id, taskId: work.taskId)
+      else
+        $scope.$broadcast 'start:work', work
         break
 
   $scope.ui =
@@ -25,25 +65,18 @@ TomatoCtrl = ($scope, Tomato, Task, Break, Work) ->
     task: new Task(name: '', priority: 0, difficulty: 0)
     brake: new Break(name: 'quick')
 
-  $scope.timer =
-    clock: 0
-    name: null
-    work: null
-    brake: null
-
-  $scope.editTomato = ->
+  $scope.edit = ->
     $scope.ui.edit = not $scope.ui.edit
-    if $scope.ui.edit
-      $('#slug').select()
+    $timeout($('#slug').select, 100) if $scope.ui.edit
 
-  $scope.updateTomato = ->
+  $scope.update = ->
     Tomato.save $scope.tomato, (t) ->
       [_, p, _, s] = window.location.href.match /^(.+?)\/([^\/]+)\/(\#.+)$/
       url = "#{p}/#{$scope.tomato.slug}/"
       window.location.href = if s then "#{url}#{s}" else url
       $scope.ui.edit = false
 
-  $scope.removeTomato = ->
+  $scope.remove = ->
     Tomato.remove $scope.tomato, (t) ->
       [_, p, _, _] = window.location.href.match /^(.+?)\/([^\/]+)\/(\#.+)$/
       window.location.href = p
@@ -53,82 +86,50 @@ TomatoCtrl = ($scope, Tomato, Task, Break, Work) ->
     Task.save $scope.ui.task, (task) ->
       $scope.tasks.push task
       $scope.ui.task = new Task(name: '', priority: 0, difficulty: 0)
-      $('#cr').select()
-
-  $scope.flagTask = (taskId) ->
-    for task, i in $scope.tasks
-      continue unless task.id is taskId
-      break if task.finishedAt > task.createdAt
-      task.priority = if task.priority is 0 then 1 else 0
-      task.$save taskId: task.id
-      break
-
-  $scope.removeTask = (taskId) ->
-    for task, i in $scope.tasks
-      continue unless task.id is taskId
-      break if task.finishedAt > task.createdAt
-      task.$remove taskId: task.id, -> $scope.tasks.splice i, 1
-      break
-
-  $scope.startTask = (taskId) ->
-    for task in $scope.tasks
-      continue unless task.id is taskId
-      break if task.finishedAt > task.createdAt
-      work = new Work()
-      work.$save taskId: task.id, ->
-        task.$save taskId: task.id
-        showWorkTimer work
-      break
-
-  $scope.finishTask = (taskId) ->
-    for task in $scope.tasks
-      continue unless task.id is taskId
-      task.finishedAt = if task.finishedAt < task.createdAt then new Date() else new Date(0)
-      task.$save taskId: task.id
-      break
-
-  $scope.worksFor = (taskId) ->
-    (w for w in $scope.works when w.taskId is taskId)
+      $timeout($('#cr').select, 100)
 
   $scope.startBreak = ->
     Break.save $scope.ui.brake, (brake) ->
       $scope.ui.brake = new Break(name: 'quick')
-      $scope.timer = clock: 1, name: brake.name, work: null, brake: brake
-
-  $scope.finishBreak = ->
-    b = $scope.timer.brake
-    b.$save breakId: b.id, ->
-      $scope.timer.brake = null
-      $('#timer').modal('hide')
-
-  showWorkTimer = (work) ->
-    dt = $scope.tomato.workMin * 60
-    elapsed = new Date() - new Date(work.createdAt)
-    for task in $scope.tasks
-      continue unless task.id is work.taskId
-      sec = Math.floor dt - elapsed / 1000
-      $scope.timer = clock: sec, name: task.name, work: work, brake: null
-      showTimer()
-      break
-
-  showBreakTimer = (brake) ->
-    elapsed = new Date() - new Date(brake.createdAt)
-    sec = Math.floor elapsed / 1000
-    $scope.timer = clock: sec, name: brake.name, work: null, brake: brake
-    showTimer()
-
-  showTimer = ->
-    $('#timer').modal('show').on 'hidden', ->
-      w = $scope.timer.work
-      w.$remove(workId: w.id, taskId: w.taskId) if w
-      b = $scope.timer.brake
-      b.$remove(breakId: b.id) if b
-      $scope.timer = clock: 0, name: null, work: null, brake: null
+      $scope.$broadcast 'start:break', brake
 
   $('#cr').select()
 
-TomatoCtrl.$inject = ['$scope', 'Tomato', 'Task', 'Break', 'Work']
+TomatoCtrl.$inject = ['$scope', 'Tomato', 'Task', 'Work', 'Break']
+
+
+TaskCtrl = ($scope, Work) ->
+  task = $scope.$parent.task
+
+  $scope.works = ->
+    (w for w in $scope.$parent.works when w.taskId is task.id)
+
+  $scope.flag = ->
+    return if task.finishedAt > task.createdAt
+    task.priority = if task.priority is 0 then 1 else 0
+    task.$save taskId: task.id
+
+  $scope.start = ->
+    return if task.finishedAt > task.createdAt
+    task.$save taskId: task.id
+    new Work().$save taskId: task.id, (w) ->
+      $scope.$parent.$parent.$broadcast 'start:work', w
+
+  $scope.remove = ->
+    return if task.finishedAt > task.createdAt
+    task.$remove taskId: task.id, -> $scope.$parent.$parent.tasks.splice i, 1
+
+  $scope.finish = ->
+    if task.finishedAt <= task.createdAt
+      task.finishedAt = new Date()
+    else
+      task.finishedAt = new Date(0)
+    task.$save taskId: task.id
+
+TaskCtrl.$inject = ['$scope', 'Work']
 
 
 angular.module('app.controllers', ['app.services'])
   .controller('TomatoCtrl', TomatoCtrl)
+  .controller('TaskCtrl', TaskCtrl)
+  .controller('TimerCtrl', TimerCtrl)
