@@ -1,27 +1,5 @@
 @import 'nib'
 
-feedback()
-  cursor: pointer
-  &:hover
-    background: $lightyeller
-
-timer(fg)
-  background: fg
-  &:hover
-    background: lighten(fg, 10%)
-
-$black = #000
-$darkgray = #666
-$lightgray = #ccc
-$white = #efefef
-$brightwhite = #fff
-
-$lightyeller = #ffb
-$lightblue = #def
-$green = #090
-
-$tomato = darken(#c30, 10%)
-
 ::-webkit-scrollbar
   height: 8px
   width: 8px
@@ -33,128 +11,83 @@ $tomato = darken(#c30, 10%)
   border-radius: 20px
   background: rgba(0, 0, 0, 0.5)
 ::-webkit-scrollbar-track-piece
-  background-color: $brightwhite
+  background-color: #fff
 
 body
-  font-family: Rosario
-  overflow-x: hidden
-
-#fmogh
-  absolute: top 40px right -50px
-  transform: rotate(45deg)
-  background: $white
-  color: $brightwhite
-
-  &:hover
-    background: linear-gradient(top, $tomato, darken($tomato, 30%))
-  a
-    padding: 10px 60px
-    color: inherit
-    background: inherit
-    text-decoration: none
-
-#timer
-  font-size: 10em
-  height: 1em
-  padding-top: 0.5em
-  font-family: Inconsolata, Consolata, monospace
-  cursor: pointer
-  &.work
-    timer($tomato)
-  &.break
-    timer($darkgray)
+  font-family: Rosario, 'Lucida Grande', sans-serif
 
 #title
-  cursor: pointer
-  feedback()
-
-  &.editing
-    input { display: block }
-    span { display: none }
-
-  input, span { font-size: 40px }
-  input { display: none }
-  span { display: block }
-
-#screen
-  fixed: top left
+  fixed: top 0px left 0px
+  height: 60px
   width: 100%
-  height: 100%
-  background: $lightgray
-  opacity: 0.666
-  z-index: 10
-  display: none
+  background: #fff
 
-  &.running
-    display: block
+  .search-query { margin-top: 10px }
+  .form-inline
+    margin-top: 15px
+    .btn { margin-top: 0 }
+  .toggle
+    margin: 15px 20px 0 0
+    opacity: 0.3
+    &:hover { opacity: 1.0 }
+
+#controls
+  fixed: top 60px left 0px
+  height: 40px
+  width: 100%
+  background: #fff
+
+  form { margin: 0 }
+
+#timer
+  text-align: center
+
+  #clock
+    font-size: 10em
+    height: 1em
+    padding-top: 0.5em
+    font-family: Inconsolata, Consolata, monospace
+
+  &.work
+    color: #369
+    h1:before { content: 'work on: ' }
+    h1:after { content: '' }
+
+  &.brake
+    color: #396
+    h1:before { content: '' }
+    h1:after { content: ' break' }
 
 #tasks
-  li
-    height: 12px
+  margin-top: 100px
 
-    &:nth-child(even)
-      background: #eee
-
-  li.task
-    &:hover
-      cursor: move
-      .icon { opacity: 0.3 }
-
-    &.active
-      background: darken($tomato, 60%)
-      color: $white
-      .cursor { opacity: 1.0 }
-
-    &.editing
-      .input { display: block }
-      .name { display: none }
-
-    &.finished
-      color: $darkgray
-      background: $lightgray
-      cursor: default
-
-      .finish { opacity: 1.0 }
-      .cursor, .remove { visibility: hidden }
-
-    &.hidden
-      display: none
-
-    .timestamp
-      display: none
-      float: left
-
-    .input
-      display: none
-      float: left
+  .task
+    height: 20px
+    padding: 5px 0
 
     .name
-      display: block
-      float: left
-      feedback()
-
-    .icon
       cursor: pointer
-      width: 20px
-      margin-right: 10px
-      float: left
+      padding-left: 10px
+
+    &:nth-child(even)
+      background: #dfefff
+      &:hover { background: #ffdfbf }
+      &.finished { background: #9f9f9f }
+
+    &:hover
+      background: #fed
+      .icons i { opacity: 0.3 }
+
+    &.finished
+      color: #6f6f6f
+      background: #afafaf
+      .name { cursor: inherit }
+
+    .tomatoes i { padding: 1px }
+
+    .icons i
+      padding: 5px
+      cursor: pointer
       opacity: 0.0
-
       &:hover { opacity: 1.0 }
-
-      &.remove
-        float: right
-        margin-right: 0
-        color: $tomato
-
-      &.finish { color: $green }
-
-    .tomatoes
-      span
-        display: block
-        float: right
-        width: 20px
-        height: 20px
-        background: $tomato
-        border-radius: 20px
-        margin-right: 2px
+      &.on { opacity: 1.0 }

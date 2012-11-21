@@ -45,21 +45,16 @@ module.exports.middleware = (options) ->
   # MODELS
 
   # works are individual work units -- something contributed to a task
-  Work = db.define 'Work'
+  Work = db.define 'work'
     id:
       type: sqlz.INTEGER
       primaryKey: true
 
   # tasks are individual line items in a tomato -- something to be accomplished
-  Task = db.define 'Task'
+  Task = db.define 'task'
     name:
       type: sqlz.STRING
       allowNull: false
-      unique: true
-    order:
-      type: sqlz.INTEGER
-      allowNull: false
-      defaultValue: 0
     priority:
       type: sqlz.INTEGER
       allowNull: false
@@ -75,26 +70,23 @@ module.exports.middleware = (options) ->
   Task.hasMany Work
 
   # breaks are just labeled segments of time
-  Break = db.define 'Break'
+  Break = db.define 'break'
     name: sqlz.STRING
 
   # a tomato is a list of tasks and a list of breaks
-  Tomato = db.define 'Tomato'
+  Tomato = db.define 'tomato'
     user: sqlz.STRING
     slug:
       type: sqlz.STRING
       allowNull: false
       unique: true
       validate: regex: /^[^\/]+$/
-    workSec:
-      type: sqlz.INTEGER
-      allowNull: false
-      validate: min: 1
-    breakSec:
+    workMin:
       type: sqlz.INTEGER
       allowNull: false
       validate: min: 1
 
+  Tomato.hasMany Work
   Tomato.hasMany Task
   Tomato.hasMany Break
 
@@ -128,34 +120,6 @@ module.exports.middleware = (options) ->
 
   app.get '/app.js', jsapp.createServer()
 
-  # PARAMS
-
-  app.param 'tomato', (req, res, next, slug) ->
-    Tomato.find(where: slug: slug)
-      .error(next)
-      .success (tomato) ->
-        return res.send(404) unless tomato
-        req.tomato = tomato
-        next()
-
-  app.param 'task', (req, res, next, id) ->
-    req.tomato.getTasks(where: id: id)
-      .error(next)
-      .success (ts) ->
-        return res.send(404) unless ts.length is 1
-        req.task = ts[0]
-        next()
-
-  app.param 'break', (req, res, next, id) ->
-    req.tomato.getBreaks(where: id: id)
-      .error(next)
-      .success (bs) ->
-        return res.send(404) unless bs.length is 1
-        req.brake = bs[0]
-        next()
-
-  # ROUTES
-
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
     ctx =
@@ -168,14 +132,13 @@ module.exports.middleware = (options) ->
     slug = req.param 'slug'
     Tomato.create(
       slug: slug
-      workSec: 60 * req.param 'workMin'
-      breakSec: 60 * req.param 'breakMin'
+      workMin: req.param 'workMin'
     )
       .error((err) -> res.send 500, err)
-      .success(-> res.redirect "/#{slug}")
+      .success(-> res.redirect "/#{slug}/")
 
-  # GET /:tomato -- return the html to drive the client-side tomato app
-  app.get '/:tomato', (req, res) ->
+  # GET /:tomato/ -- return the html to drive the client-side tomato app
+  app.get '/:tomato/', (req, res) ->
     # keep the database clean by removing rotten tomatoes.
     Tomato.findAll(where: ['updatedAt < ?', Date.now() - 1000 * 86400 * 100])
       .success((ts) -> t.destroy() for t in ts)
@@ -185,18 +148,42 @@ module.exports.middleware = (options) ->
       tomato: req.tomato
     res.render 'main', ctx
 
-  # PUT /:tomato -- update the id, name, etc. of a tomato
-  app.put '/:tomato', (req, res) ->
-    fields = ['slug', 'workSec', 'breakSec']
+  # -- TOMATOES --
+
+  app.param 'tomato', (req, res, next, slug) ->
+    Tomato.find(where: slug: slug)
+      .error(next)
+      .success (tomato) ->
+        return res.send(404) unless tomato
+        req.tomato = tomato
+        next()
+
+  # GET /:tomato/tomato -- return json for a tomato
+  app.get '/:tomato/tomato', (req, res) ->
+    res.send req.tomato
+
+  # POST /:tomato/tomato -- update the id, name, etc. of a tomato
+  app.post '/:tomato/tomato', (req, res) ->
+    fields = ['slug', 'workMin']
     req.tomato.updateAttributes(req.body, fields)
       .error((err) -> res.send 500, err)
-      .success(-> res.send 200)
+      .success((t) -> res.send t)
 
   # DELETE /:tomato -- delete a tomato and all tasks and breaks
-  app.del '/:tomato', (req, res) ->
+  app.del '/:tomato/tomato', (req, res) ->
     req.tomato.destroy()
       .error((err) -> res.send 500, err)
       .success(-> res.send 200)
+
+  # -- TASKS --
+
+  app.param 'task', (req, res, next, id) ->
+    req.tomato.getTasks(where: id: id)
+      .error(next)
+      .success (ts) ->
+        return res.send(404) unless ts.length is 1
+        req.task = ts[0]
+        next()
 
   # GET /:tomato/tasks -- get all tasks for a tomato
   app.get '/:tomato/tasks', (req, res) ->
@@ -207,9 +194,8 @@ module.exports.middleware = (options) ->
   # POST /:tomato/tasks -- create a new task for a tomato
   app.post '/:tomato/tasks', (req, res) ->
     Task.create(
-      TomatoId: req.tomato.id
+      tomatoId: req.tomato.id
       name: req.param 'name'
-      order: req.param 'order'
       priority: req.param 'priority'
       difficulty: req.param 'difficulty'
       finishedAt: null
@@ -217,22 +203,65 @@ module.exports.middleware = (options) ->
       .error((err) -> res.send 500, err)
       .success((t) -> res.send t)
 
-  # GET /:tomato/tasks/:task -- return data for a task
-  app.get '/:tomato/tasks/:task', (req, res) ->
-    res.send req.task
-
-  # PUT /:tomato/tasks/:task -- update data for a task
-  app.put '/:tomato/tasks/:task', (req, res) ->
-    fields = ['name', 'order', 'priority', 'difficulty', 'finishedAt']
+  # POST /:tomato/tasks/:task -- update data for a task
+  app.post '/:tomato/tasks/:task', (req, res) ->
+    fields = ['name', 'priority', 'difficulty', 'finishedAt']
     req.task.updateAttributes(req.body, fields)
       .error((err) -> res.send 500, err)
-      .success(-> res.send 200)
+      .success((t) -> res.send t)
 
   # DELETE /:tomato/tasks/:task -- remove a task
   app.del '/:tomato/tasks/:task', (req, res) ->
     req.task.destroy()
       .error((err) -> res.send 500, err)
       .success(-> res.send 200)
+
+  # -- WORKS --
+
+  app.param 'work', (req, res, next, id) ->
+    req.tomato.getWorks(where: id: id)
+      .error(next)
+      .success (ws) ->
+        return res.send(404) unless ws.length is 1
+        req.work = ws[0]
+        next()
+
+  # GET /:tomato/works -- return work periods
+  app.get '/:tomato/works', (req, res) ->
+    req.tomato.getWorks()
+      .error((err) -> res.send 500, err)
+      .success((ws) -> res.send ws)
+
+  # POST /:tomato/works -- start work period
+  app.post '/:tomato/works', (req, res) ->
+    req.tomato.getTasks(where: id: req.param 'taskId')
+      .error((err) -> res.send 500, err)
+      .success (ts) ->
+        Work.create(tomatoId: req.tomato.id, taskId: ts[0].id)
+          .error((err) -> res.send 500, err)
+          .success((w) -> res.send w)
+
+  # POST /:tomato/works/:work -- finish work period
+  app.post '/:tomato/works/:work', (req, res) ->
+    req.work.save()
+      .error((err) -> res.send 500, err)
+      .success((w) -> res.send w)
+
+  # DELETE /:tomato/works/:work -- cancel work period
+  app.del '/:tomato/works/:work', (req, res) ->
+    req.work.destroy()
+      .error((err) -> res.send 500, err)
+      .success(-> res.send 200)
+
+  # -- BREAKS --
+
+  app.param 'break', (req, res, next, id) ->
+    req.tomato.getBreaks(where: id: id)
+      .error(next)
+      .success (bs) ->
+        return res.send(404) unless bs.length is 1
+        req.brake = bs[0]
+        next()
 
   # GET /:tomato/breaks -- get all breaks for a tomato
   app.get '/:tomato/breaks', (req, res) ->
@@ -242,19 +271,15 @@ module.exports.middleware = (options) ->
 
   # POST /:tomato/breaks -- create a new break for a tomato
   app.post '/:tomato/breaks', (req, res) ->
-    Break.create(TomatoId: req.tomato.id, name: req.param 'name')
+    Break.create(tomatoId: req.tomato.id, name: req.param 'name')
       .error((err) -> res.send 500, err)
       .success((b) -> res.send b)
 
-  # GET /:tomato/breaks/:break -- return data for a break
-  app.get '/:tomato/breaks/:break', (req, res) ->
-    res.send req.brake
-
-  # PUT /:tomato/breaks/:break -- update data for a break
-  app.put '/:tomato/breaks/:break', (req, res) ->
+  # POST /:tomato/breaks/:break -- update data for a break
+  app.post '/:tomato/breaks/:break', (req, res) ->
     req.brake.updateAttributes(req.body, ['name'])
       .error((err) -> res.send 500, err)
-      .success(-> res.send 200)
+      .success((b) -> res.send b)
 
   # DELETE /:tomato/breaks/:break -- remove a break
   app.del '/:tomato/breaks/:break', (req, res) ->

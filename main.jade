@@ -1,14 +1,16 @@
 !!! 5
-html(lang='en', ng-controller='AppCtrl')
+html(lang='en')
   head
     meta(charset='utf-8')
     meta(name='description', content='Use the Pomodoro Technique to organize and track your tasks, all from a browser window. Incorporate work and breaks easily into your schedule!')
     meta(name='keywords', content='pomodoro technique, task list, time management')
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+    //-link(rel='stylesheet', type='text/css', href='/offline/bootstrap.no-icons.min.css')
+    //-link(rel='stylesheet', type='text/css', href='/offline/font-awesome.css')
     link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/css/bootstrap.no-icons.min.css')
     link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/font-awesome/2.0/css/font-awesome.css')
-    link(rel='stylesheet', type='text/css', href='http://fonts.googleapis.com/css?family=Rosario|Inconsolata')
+    link(rel='stylesheet', type='text/css', href='//fonts.googleapis.com/css?family=Rosario|Inconsolata')
     link(rel='stylesheet', type='text/css', href='#{basepath}/css/tomato.css')
     //if lte IE 8
       script(src='//html5shiv.googlecode.com/svn/trunk/html5.js')
@@ -22,81 +24,64 @@ html(lang='en', ng-controller='AppCtrl')
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
-    title(ng-bind-template='{{ pageTitle }}')
+    title #{tomato.slug} | Tomato
   body
-    .container
-      #view(ng-view)
+    #view(ng-view)
 
     script(type='text/ng-template', id='/index.html')
-      input#filter(type='text', value='', size='15', placeholder='☂')
-      #fmogh: a(target='_blank', href='http://github.com/lmjohns3/express-tomato') FMOGH
-      .row
-        #timer 11:23
-        #title
-          span.slug= tomato.slug
-          input(class='input', type='text', value='', size='12')
-      .row
-        input#new-task(type='text', value='', size='40', placeholder='Add a task...')
-      ul.unstyled#tasks(ng-repeat='task in tasks')
-        i.icon-cursor(title='make this the current task') &#x261e;
-        i.icon-finish(title='mark this task as finished') &#x2714;
-        i.icon-remove(title='remove this task') &#x2718;
-        .timestamp {{ task.stamp }}
-        .priority {{ task.priority }}
-        .difficulty {{ task.difficulty }}
-        input.input(type='text', ng-value='{{ task.name }}', size='25')
-        .name {{ task.name }}
-        .tomatoes
-        p Tomato: {{title()}}
+      #title
+        .container
+          h1(ng-hide='ui.edit', ng-click='editTomato()')
+            = "{{ tomato.slug }}"
+            small= " ({{ tomato.workMin }})"
+          form.form-inline(ng-submit='updateTomato()', ng-show='ui.edit')
+            .controls.controls-row
+              input#slug.span4(ng-model='tomato.slug', type='text')
+              input.span1(ng-model='tomato.workMin', type='text')
+              button.span1.btn.btn-primary(type='submit') Save
+      #controls
+        .container
+          form.pull-right
+            .input-prepend
+              span.add-on: i.icon-search
+              input.span2(ng-model='ui.filter', type='text', placeholder='Filter')
+          form(ng-submit='addTask()')
+            .controls.controls-row
+              input.span6(ng-model='ui.task.name', placeholder='Add a task...', type='text')
+      #tasks.container
+        .task(ng-repeat='task in tasks | filter:ui.filter | orderBy:ui.order', ng-class='{ finished: task.finishedAt > task.createdAt }')
+          .row
+            .span6
+              .name(ng-click='startTask(task.id)') {{ task.name }}
+            .span4.tomatoes
+              = '&nbsp;'
+              i.icon-star(ng-repeat='work in worksFor(task.id)')
+            .span2.icons
+              i.icon-ok(ng-click='finishTask(task.id)', ng-class='{ on: task.finishedAt > task.createdAt }')
+              i.icon-flag(ng-click='flagTask(task.id)', ng-class='{ on: task.priority > 0 }')
+              i.icon-trash(ng-click='removeTask(task.id)')
+      #timer.modal.fade(ng-class='{work: timer.work, brake: timer.brake}')
+        .modal-body
+          h1 {{ timer.name }}
+          #clock(tomato-timer)
+          form.form-inline(ng-class='{ hide: timer.clock > 0 }')
+            input(ng-model='ui.brake.name', type='text', size='5')
+            button.btn.btn-info(ng-click='startBreak()') Break
+          form.form-inline(ng-show='timer.brake')
+            button.btn.btn-info(ng-click='finishBreak()') Done
 
     script(type='text/ng-template', id='/report.html')
       .row
         p Report: {{title()}}
 
-    #about.modal
-      .ps
-        p.
-          Welcome! This is a browser-based tool for keeping track of tasks and
-          enhancing productivity using the <a
-          href="http://www.pomodorotechnique.com" target="_blank">Pomodoro
-          Technique</a>.
-        p.
-          To get started, type in the names of a few tasks. When you're ready to
-          work, double-click a task. The timer starts, the app dims, and a hand
-          points at the task you're focused on. Work on your task until the bell
-          rings. After finishing a "tomato" of work, the timer changes to indicate
-          break mode. Take a short break by clicking on the timer again; get up
-          and walk around a little. When the break is over, double-click a task
-          and get back to work!
-        p.
-          When you've finished a task, click the check mark next to its name. Over
-          time, you'll be able to see the tasks you've completed, and how many
-          "tomatoes" they've each needed.
-        p.
-          You can use the keyboard, too: <b>+</b> adds a new task, <b>/</b>
-          filters the task list, <b>space bar</b> starts the timer for the
-          current task, <b>J</b> and <b>K</b> move the cursor up and down the
-          task list, <b>F</b> marks the current task as finished, and
-          <b>enter</b> edits the current task.
-        p.
-          This tool is very much a work in progress. I would enjoy hearing what
-          you think of it! Email me at leif@leifjohnson.net, or <a target="_blank"
-          href="http://github.com/lmjohns3/express-tomato">fork the code</a>.
-
-      button(onclick='javascript:$("#about").fadeOut(300)') OK
-
-    #screen
-
+    //-script(src='/offline/jquery.min.js')
+    //-script(src='/offline/bootstrap.min.js')
+    //-script(src='/offline/angular.min.js')
+    //-script(src='/offline/angular-resource.min.js')
     script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js')
-    script(src='//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js')
     script(src='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/js/bootstrap.min.js')
     script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js')
-    script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular-cookies.min.js')
     script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular-resource.min.js')
     script(src='#{basepath}/app.js')
     script
-      $(function() {
-        require('tomato').init("#{basepath}", "#{tomato.slug}");
-        $("#tasks").sortable({axis: 'y', containment: 'parent', items: 'li.task'});
-        $("#tasks").disableSelection();
-      });
+      $(function() { require('tomato'); });

@@ -1,30 +1,23 @@
-controllers = require 'controllers'
-directives = require 'directives'
-filters = require 'filters'
-services = require 'services'
+require 'controllers'
+require 'directives'
+require 'filters'
+require 'services'
 
-Tomato = angular.module 'tomato', [
-  'ngCookies'
-  'ngResource'
-  'tomato.controllers'
-  'tomato.directives'
-  'tomato.filters'
-  'tomato.services'
-]
+angular.module('app', [
+  'app.controllers'
+  'app.directives'
+  'app.filters'
+  'app.services'
+]).config([
+  '$routeProvider'
+  '$locationProvider'
+  ($routeProvider, $locationProvider, config) ->
+    $routeProvider
+      .when('/', templateUrl: '/index.html', controller: 'TomatoCtrl')
+      .when('/report', templateUrl: '/report.html', controller: 'ReportCtrl')
+      .otherwise(redirectTo: '/')
+    $locationProvider.html5Mode false
+])
 
-exports.init = (basepath, slug) ->
-  root = "#{basepath}/#{slug}/"
-
-  Tomato.config [
-    '$routeProvider'
-    '$locationProvider'
-    ($routeProvider, $locationProvider, config) ->
-      $routeProvider
-        .when(root, templateUrl: '/index.html', controller: 'TomatoCtrl')
-        .when("#{root}/report", templateUrl: '/report.html', controller: 'ReportCtrl')
-        .otherwise(redirectTo: root)
-      $locationProvider.html5Mode true
-  ]
-
-  angular.element(document).ready ->
-    angular.bootstrap document, ['tomato']
+angular.element(document).ready ->
+  angular.bootstrap document, ['app']

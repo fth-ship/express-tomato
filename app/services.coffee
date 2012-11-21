@@ -1,3 +1,5 @@
-S = angular.module 'tomato.services', []
-
-S.factory 'version', -> '0.1'
+angular.module('app.services', ['ngResource'])
+  .factory('Tomato', ($resource) -> $resource 'tomato')
+  .factory('Break', ($resource) -> $resource 'breaks/:breakId')
+  .factory('Task', ($resource) -> $resource 'tasks/:taskId')
+  .factory('Work', ($resource) -> $resource 'works/:workId')
