@@ -1,18 +1,5 @@
 @import 'nib'
 
-::-webkit-scrollbar
-  height: 8px
-  width: 8px
-  overflow: visible
-::-webkit-scrollbar-button, ::-webkit-scrollbar-corner
-  height: 0
-  width: 0
-::-webkit-scrollbar-thumb
-  border-radius: 20px
-  background: rgba(0, 0, 0, 0.5)
-::-webkit-scrollbar-track-piece
-  background-color: #fff
-
 body
   font-family: Rosario, 'Lucida Grande', sans-serif
 
@@ -58,8 +45,12 @@ body
     h1:before { content: '' }
     h1:after { content: ' break' }
 
+#filter
+  margin-left: 20px
+
 #tasks
   margin-top: 100px
+  margin-bottom: 20px
 
   .task
     height: 20px
