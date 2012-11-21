@@ -1,7 +1,7 @@
 # express-tomato
 
-An [expressjs][] server and [backbonejs][] client for using the
-[Pomodoro Technique®][pomodoro]. Currently uses [mongodb][] for persistence.
+An [expressjs][] server and [angularjs][] client for using the
+[Pomodoro Technique®][pomodoro]. Uses [sequelize][] for persistence.
 
 To use as a standalone app, just start up the server:
 
@@ -14,15 +14,12 @@ To mount within another express server, run the `.middleware()` method:
 Available options:
 
 - **analytics** - a Google Analytics identifier
-- **db** - mongodb server to use (defaults to mongodb://localhost/tomato)
-- **timers** - an object with `workSec` and `breakSec` attributes specifying the
-  length of the work and break timers (defaults to {workSec: 25 * 60, breakSec:
-  5 * 60})
+- **db** - sqlite database to use (defaults to =./tomato.db=)
 
 [expressjs]: http://expressjs.com
-[backbonejs]: http://backbonejs.org
+[angularjs]: http://angularjs.org
 [pomodoro]: http://www.pomodorotechnique.com
-[mongodb]: http://mongodb.org
+[sequelize]: http://sequelizejs.com
 
 ## Inspiration
 
