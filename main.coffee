@@ -36,9 +36,10 @@ module.exports.middleware = (options) ->
   jsapp.compile (err, source) ->
     {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
     minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
-    fs.writeFile "#{__dirname}/public/app.js", minified, (err) ->
+    target = "#{__dirname}/public/tomato.js"
+    fs.writeFile target, minified, (err) ->
       throw err if err
-      console.log 'compiled app.js'
+      console.log 'compiled', target
 
   db = new sqlz '', '', '', dialect: 'sqlite', storage: options?.db or 'tomato.db'
 
@@ -118,7 +119,7 @@ module.exports.middleware = (options) ->
     app.use express.static "#{__dirname}/public"
     app.use app.router
 
-  app.get '/app.js', jsapp.createServer()
+  app.get '/tomato.js', jsapp.createServer()
 
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
