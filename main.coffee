@@ -1,4 +1,4 @@
-# Copyright (c) 2011 Leif Johnson <leif@leifjohnson.net>
+# Copyright (c) 2011-2012 Leif Johnson <leif@leifjohnson.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,31 +33,20 @@ module.exports.middleware = (options) ->
     paths: ["#{__dirname}/app"]
     dependencies: []
 
-  jsapp.compile (err, source) ->
-    {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
-    minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
-    fs.writeFile "#{__dirname}/public/app.js", minified, (err) ->
-      throw err if err
-      console.log 'compiled app.js'
-
   db = new sqlz '', '', '',
     dialect: 'sqlite'
-    storage: options?.db?.name or 'tomato.db'
-
-  prefix = options?.db?.prefix or 'tomato'
-  if prefix.length > 0 and prefix[-1] isnt '_'
-    prefix = "#{prefix}_"
+    storage: options?.db or 'tomato.db'
 
   # MODELS
 
   # works are timed work periods -- something contributed to a task
-  Work = db.define "#{prefix}work"
+  Work = db.define 'Work',
     id:
       type: sqlz.INTEGER
       primaryKey: true
 
   # tasks are individual line items in a tomato -- something to be accomplished
-  Task = db.define "#{prefix}task"
+  Task = db.define 'Task',
     name:
       type: sqlz.STRING
       allowNull: false
@@ -73,14 +62,14 @@ module.exports.middleware = (options) ->
       validate: min: 0
     finishedAt: sqlz.DATE
 
-  Task.hasMany Work
+  Task.hasMany Work, foreignKey: 'taskId'
 
   # breaks are just labeled segments of time
-  Break = db.define "#{prefix}break"
+  Break = db.define 'Break',
     name: sqlz.STRING
 
   # a tomato is a list of tasks and a list of breaks
-  Tomato = db.define "#{prefix}tomato"
+  Tomato = db.define 'Tomato',
     user: sqlz.STRING
     slug:
       type: sqlz.STRING
@@ -92,9 +81,9 @@ module.exports.middleware = (options) ->
       allowNull: false
       validate: min: 1
 
-  Tomato.hasMany Work
-  Tomato.hasMany Task
-  Tomato.hasMany Break
+  Tomato.hasMany Work, foreignKey: 'tomatoId'
+  Tomato.hasMany Task, foreignKey: 'tomatoId'
+  Tomato.hasMany Break, foreignKey: 'tomatoId'
 
   db.sync().error (err) ->
     console.log err
@@ -103,12 +92,6 @@ module.exports.middleware = (options) ->
   # APP
 
   app = express()
-
-  app.configure 'development', ->
-    app.use express.errorHandler dumpExceptions: true, showStack: true
-
-  app.configure 'production', ->
-    app.use express.errorHandler()
 
   app.configure ->
     app.set 'views', __dirname
@@ -124,7 +107,20 @@ module.exports.middleware = (options) ->
     app.use express.static "#{__dirname}/public"
     app.use app.router
 
-  app.get '/app.js', jsapp.createServer()
+  app.configure 'development', ->
+    app.use express.errorHandler dumpExceptions: true, showStack: true
+    app.get '/app.js', jsapp.createServer()
+
+  app.configure 'production', ->
+    app.use express.errorHandler()
+    jsapp.compile (err, source) ->
+      {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
+      minified = gen_code ast_squeeze uglify.parser.parse source
+      # -- ast_mangle seems to break something in angular.js. :(
+      #minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
+      fs.writeFile "#{__dirname}/public/app.js", minified, (err) ->
+        throw err if err
+        console.log 'compiled app.js'
 
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
