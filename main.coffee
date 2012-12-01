@@ -40,18 +40,24 @@ module.exports.middleware = (options) ->
       throw err if err
       console.log 'compiled app.js'
 
-  db = new sqlz '', '', '', dialect: 'sqlite', storage: options?.db or 'tomato.db'
+  db = new sqlz '', '', '',
+    dialect: 'sqlite'
+    storage: options?.db?.name or 'tomato.db'
+
+  prefix = options?.db?.prefix or 'tomato'
+  if prefix.length > 0 and prefix[-1] isnt '_'
+    prefix = "#{prefix}_"
 
   # MODELS
 
-  # works are individual work units -- something contributed to a task
-  Work = db.define 'work'
+  # works are timed work periods -- something contributed to a task
+  Work = db.define "#{prefix}work"
     id:
       type: sqlz.INTEGER
       primaryKey: true
 
   # tasks are individual line items in a tomato -- something to be accomplished
-  Task = db.define 'task'
+  Task = db.define "#{prefix}task"
     name:
       type: sqlz.STRING
       allowNull: false
@@ -70,11 +76,11 @@ module.exports.middleware = (options) ->
   Task.hasMany Work
 
   # breaks are just labeled segments of time
-  Break = db.define 'break'
+  Break = db.define "#{prefix}break"
     name: sqlz.STRING
 
   # a tomato is a list of tasks and a list of breaks
-  Tomato = db.define 'tomato'
+  Tomato = db.define "#{prefix}tomato"
     user: sqlz.STRING
     slug:
       type: sqlz.STRING
