@@ -27,12 +27,11 @@ stitch = require 'stitch'
 stylus = require 'stylus'
 uglify = require 'uglify-js'
 
+jsapp = stitch.createPackage
+  paths: ["#{__dirname}/app"]
+  dependencies: []
 
 module.exports.middleware = (options) ->
-  jsapp = stitch.createPackage
-    paths: ["#{__dirname}/app"]
-    dependencies: []
-
   db = new sqlz '', '', '',
     dialect: 'sqlite'
     storage: options?.db or 'tomato.db'
@@ -94,6 +93,8 @@ module.exports.middleware = (options) ->
   app = express()
 
   app.configure ->
+    app.set 'basepath', app.path()
+    app.set 'analytics', options?.analytics
     app.set 'views', __dirname
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
@@ -116,39 +117,39 @@ module.exports.middleware = (options) ->
     jsapp.compile (err, source) ->
       {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
       minified = gen_code ast_squeeze uglify.parser.parse source
-      # -- ast_mangle seems to break something in angular.js. :(
-      #minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
       fs.writeFile "#{__dirname}/public/tomato.js", minified, (err) ->
         throw err if err
         console.log 'compiled tomato.js'
 
+  # AUTH
+
+  getUserName = options?.userName
+  if typeof getUserName isnt 'function'
+    getUserName = (req, callback) -> callback(null, getUserName)
+
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
-    ctx =
-      analytics: options?.analytics
-      basepath: (app.settings.basepath or '').replace /\/$/, ''
-    res.render 'index', ctx
+    res.render 'index'
 
   # POST / -- create a new tomato
   app.post '/', (req, res) ->
-    slug = req.param 'slug'
-    Tomato.create(
-      slug: slug
-      workMin: req.param 'workMin'
-    )
-      .error((err) -> res.send 500, err)
-      .success(-> res.redirect "/#{slug}/")
+    getUserName req, (err, name) ->
+      return res.send(500, err) if err
+      slug = req.param 'slug'
+      Tomato.create(
+        slug: slug
+        user: name
+        workMin: req.param 'workMin'
+      )
+        .error((err) -> res.send 500, err)
+        .success(-> res.redirect "/#{slug}/")
 
   # GET /:tomato/ -- return the html to drive the client-side tomato app
   app.get '/:tomato/', (req, res) ->
     # keep the database clean by removing rotten tomatoes.
     Tomato.findAll(where: ['updatedAt < ?', Date.now() - 1000 * 86400 * 100])
       .success((ts) -> t.destroy() for t in ts)
-    ctx =
-      analytics: options?.analytics
-      basepath: (app.settings.basepath or '').replace /\/$/, ''
-      tomato: req.tomato
-    res.render 'main', ctx
+    res.render 'main', tomato: req.tomato
 
   # -- TOMATOES --
 
@@ -157,8 +158,10 @@ module.exports.middleware = (options) ->
       .error(next)
       .success (tomato) ->
         return res.send(404) unless tomato
-        req.tomato = tomato
-        next()
+        getUserName req, (err, name) ->
+          return res.send(403) if tomato.user isnt name
+          req.tomato = tomato
+          next()
 
   # GET /:tomato/tomato -- return json for a tomato
   app.get '/:tomato/tomato', (req, res) ->
