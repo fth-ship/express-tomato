@@ -49,10 +49,13 @@ html(lang='en')
             .controls.controls-row
               input#cr.span6(ng-model='ui.task.name', placeholder='Add a task...', type='text')
       #tasks.container
-        .task(ng-repeat='task in tasks | filter:ui.filter | orderBy:ui.order', ng-class='{ finished: task.finishedAt > task.createdAt }', ng-controller='TaskCtrl')
+        .task(ng-repeat='task in tasks | filter:ui.filter | orderBy:ui.order',
+              ng-class='{ finished: task.finishedAt > task.createdAt }',
+              ng-controller='TaskCtrl',
+              ng-dblclick='start()')
           .row
             .span6
-              .name(ng-click='start()') {{ task.name }}
+              .name {{ task.name }}
             .span4.tomatoes
               = '&nbsp;'
               i.icon-star(ng-repeat='work in works()')
@@ -60,7 +63,7 @@ html(lang='en')
               i.icon-ok(ng-click='finish()', ng-class='{ on: task.finishedAt > task.createdAt }')
               i.icon-flag(ng-click='flag()', ng-class='{ on: task.priority > 0 }')
               i.icon-trash(ng-click='remove()')
-      #timer.modal.fade(ng-class='{work: timer.work, brake: timer.brake}', ng-controller='TimerCtrl')
+      #timer.modal.fade(ng-class='{ work: timer.work, brake: timer.brake }', ng-controller='TimerCtrl')
         .modal-body
           h1 {{ timer.name }}
           #clock(clock)
