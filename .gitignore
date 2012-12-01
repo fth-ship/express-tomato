@@ -1,4 +1,4 @@
 *.css
-public/app.js
+public/tomato.js
 node_modules
 *.db

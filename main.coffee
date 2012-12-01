@@ -109,7 +109,7 @@ module.exports.middleware = (options) ->
 
   app.configure 'development', ->
     app.use express.errorHandler dumpExceptions: true, showStack: true
-    app.get '/app.js', jsapp.createServer()
+    app.get '/tomato.js', jsapp.createServer()
 
   app.configure 'production', ->
     app.use express.errorHandler()
@@ -118,9 +118,9 @@ module.exports.middleware = (options) ->
       minified = gen_code ast_squeeze uglify.parser.parse source
       # -- ast_mangle seems to break something in angular.js. :(
       #minified = gen_code ast_squeeze ast_mangle uglify.parser.parse source
-      fs.writeFile "#{__dirname}/public/app.js", minified, (err) ->
+      fs.writeFile "#{__dirname}/public/tomato.js", minified, (err) ->
         throw err if err
-        console.log 'compiled app.js'
+        console.log 'compiled tomato.js'
 
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
