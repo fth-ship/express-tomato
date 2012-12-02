@@ -93,19 +93,18 @@ module.exports.middleware = (options) ->
   app = express()
 
   app.configure ->
-    app.set 'basepath', app.path()
+    app.set 'basepath', -> "#{app.path()}/"
     app.set 'analytics', options?.analytics
     app.set 'views', __dirname
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
-    app.use express.logger 'short'
     app.use stylus.middleware
       src: "#{__dirname}/public"
       compile: (str, path) ->
         stylus(str).set('filename', path).set('compress', true).use(nib())
     app.use express.methodOverride()
     app.use express.bodyParser()
-    app.use express.static "#{__dirname}/public"
+    app.use express.static "#{__dirname}/public", maxAge: 7 * 86400 * 1000
     app.use app.router
 
   app.configure 'development', ->
@@ -119,13 +118,12 @@ module.exports.middleware = (options) ->
       minified = gen_code ast_squeeze uglify.parser.parse source
       fs.writeFile "#{__dirname}/public/tomato.js", minified, (err) ->
         throw err if err
-        console.log 'compiled tomato.js'
+        console.log "compiled #{__dirname}/public/tomato.js"
 
   # AUTH
 
-  getUserName = options?.userName
-  if typeof getUserName isnt 'function'
-    getUserName = (req, callback) -> callback(null, getUserName)
+  z = options?.userName
+  getUserName = if typeof z is 'function' then z else (r, cb) -> cb(null, z)
 
   # GET / -- return html for creating a new tomato
   app.get '/', (req, res) ->
@@ -142,7 +140,7 @@ module.exports.middleware = (options) ->
         workMin: req.param 'workMin'
       )
         .error((err) -> res.send 500, err)
-        .success(-> res.redirect "/#{slug}/")
+        .success(-> res.redirect "#{slug}/")
 
   # GET /:tomato/ -- return the html to drive the client-side tomato app
   app.get '/:tomato/', (req, res) ->
@@ -159,7 +157,7 @@ module.exports.middleware = (options) ->
       .success (tomato) ->
         return res.send(404) unless tomato
         getUserName req, (err, name) ->
-          return res.send(403) if tomato.user isnt name
+          return res.send(403) if tomato.user and tomato.user isnt name
           req.tomato = tomato
           next()
 
