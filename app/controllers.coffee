@@ -8,8 +8,9 @@ TimerCtrl = ($scope, Work, Break) ->
   E = $('#timer')
   show = ->
     E.modal('show').on 'hidden', ->
+      console.log T
       Work.remove(workId: T.work.id, taskId: T.work.taskId) if T.work
-      Brake.remove(breakId: T.brake.id) if T.brake
+      Break.remove(breakId: T.brake.id) if T.brake
 
   $scope.finishBreak = ->
     T.brake.$save breakId: T.brake.id, ->
