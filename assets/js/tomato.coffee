@@ -1,7 +1,7 @@
-require 'controllers'
-require 'directives'
-require 'filters'
-require 'services'
+#= require 'controllers'
+#= require 'directives'
+#= require 'filters'
+#= require 'services'
 
 angular.module('app', [
   'app.controllers'

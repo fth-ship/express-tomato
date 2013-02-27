@@ -19,22 +19,16 @@
 # SOFTWARE.
 
 _ = require 'underscore'
+assets = require 'connect-assets'
 express = require 'express'
-fs = require 'fs'
-nib = require 'nib'
 sqlz = require 'sequelize'
-stitch = require 'stitch'
-stylus = require 'stylus'
-uglify = require 'uglify-js'
 
-jsapp = stitch.createPackage
-  paths: ["#{__dirname}/app"]
-  dependencies: []
 
 module.exports.middleware = (options) ->
   db = new sqlz '', '', '',
     dialect: 'sqlite'
     storage: options?.db or 'tomato.db'
+    logging: false
     define:
       classMethods:
         findAll_: (opts, cb) ->
@@ -127,27 +121,12 @@ module.exports.middleware = (options) ->
     app.set 'views', __dirname
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
-    app.use stylus.middleware
-      src: "#{__dirname}/public"
-      compile: (str, path) ->
-        stylus(str).set('filename', path).set('compress', true).use(nib())
+    app.set 'strict routing', true
+    app.use assets()
     app.use express.methodOverride()
     app.use express.bodyParser()
     app.use express.static "#{__dirname}/public", maxAge: 7 * 86400 * 1000
     app.use app.router
-
-  app.configure 'development', ->
-    app.use express.errorHandler dumpExceptions: true, showStack: true
-    app.get '/tomato.js', jsapp.createServer()
-
-  app.configure 'production', ->
-    app.use express.errorHandler()
-    jsapp.compile (err, source) ->
-      {gen_code, ast_squeeze, ast_mangle} = uglify.uglify
-      minified = gen_code ast_squeeze uglify.parser.parse source
-      fs.writeFile "#{__dirname}/public/tomato.js", minified, (err) ->
-        throw err if err
-        console.log "compiled #{__dirname}/public/tomato.js"
 
   # AUTH
 
@@ -162,14 +141,15 @@ module.exports.middleware = (options) ->
   app.post '/', (req, res, next) ->
     getUserName req, (err, name) ->
       return next(err) if err
-      slug = req.param 'slug'
-      opts = slug: slug, user: name, workMin: req.param 'workMin'
+      slug = req.body.slug
+      opts = slug: slug, user: name, workMin: req.body.workMin
       Tomato.create_ opts, (err, tomato) ->
         return next(err) if err
         res.redirect "#{slug}/"
 
   # GET /:tomato -- return the html to drive the client-side tomato app
-  app.get '/:tomato', (req, res) ->
+  app.get '/:tomato', (req, res) -> res.redirect "#{req.tomato.slug}/"
+  app.get '/:tomato/', (req, res) ->
     # remove tomatoes that haven't been updated in 100d.
     old = ['updatedAt < ?', new Date Date.now() - 86400000 * 100]
     Tomato.findAll(where: old).success((ts) -> t.destroy() for t in ts)
@@ -181,7 +161,7 @@ module.exports.middleware = (options) ->
     getUserName req, (err, name) ->
       Tomato.find_ where: {slug: slug, user: name}, (err, tomato) ->
         return next(err) if err
-        return res.send(404) unless tomato
+        return next(status: 404) unless tomato
         req.tomato = tomato
         next()
 
@@ -206,7 +186,7 @@ module.exports.middleware = (options) ->
   app.param 'task', (req, res, next, id) ->
     Task.find_ where: {tomatoId: req.tomato.id, id: id}, (err, task) ->
       return next(err) if err
-      return res.send(404) unless task
+      return next(status: 404) unless task
       req.task = task
       next()
 
@@ -220,9 +200,9 @@ module.exports.middleware = (options) ->
   app.post '/:tomato/tasks', (req, res, next) ->
     opts =
       tomatoId: req.tomato.id
-      name: req.param 'name'
-      priority: req.param 'priority'
-      difficulty: req.param 'difficulty'
+      name: req.body.name
+      priority: req.body.priority
+      difficulty: req.body.difficulty
       finishedAt: null
     Task.create_ opts, (err, task) ->
       return next(err) if err
@@ -249,7 +229,7 @@ module.exports.middleware = (options) ->
   app.param 'work', (req, res, next, id) ->
     Work.find_ where: {tomatoId: req.tomato.id, id: id}, (err, work) ->
       return next(err) if err
-      return res.send(404) unless work
+      return next(status: 404) unless work
       req.work = work
       next()
 
@@ -264,7 +244,7 @@ module.exports.middleware = (options) ->
     query = tomatoId: req.tomato.id, id: req.param 'taskId'
     Task.find_ where: query, (err, task) ->
       return next(err) if err
-      Work.create_ tomatoId: task.tomatoId, taskId: task.id, (err, work) ->
+      Work.create_ tomatoId: req.tomato.id, taskId: task.id, (err, work) ->
         return next(err) if err
         req.tomato.save()
         res.send work
@@ -288,7 +268,7 @@ module.exports.middleware = (options) ->
   app.param 'break', (req, res, next, id) ->
     Break.find_ where: {tomatoId: req.tomato.id, id: id}, (err, brake) ->
       return next(err) if err
-      return res.send(404) unless brake
+      return next(status: 404) unless brake
       req.brake = brake
       next()
 

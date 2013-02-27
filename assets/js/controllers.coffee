@@ -118,7 +118,7 @@ TaskCtrl = ($scope, Work) ->
 
   $scope.remove = ->
     return if task.finishedAt > task.createdAt
-    task.$remove taskId: task.id, -> $scope.$parent.$parent.tasks.splice i, 1
+    task.$remove taskId: task.id
 
   $scope.finish = ->
     if task.finishedAt <= task.createdAt

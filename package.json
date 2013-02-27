@@ -9,16 +9,15 @@
   },
   "main": "main.coffee",
   "dependencies": {
-    "coffee-script": ">= 1.4",
-    "express": ">= 3.0",
-    "jade": ">= 0.27",
-    "nib": ">= 0.3",
-    "sequelize": ">= 1.5",
-    "sqlite3": ">= 2.0",
-    "stitch": ">= 0.3",
-    "stylus": ">= 0.31",
-    "underscore": ">= 1.4",
-    "uglify-js": ">= 1.2"
+    "coffee-script": ">= 1.5",
+    "connect-assets": ">= 2.3",
+    "express": ">= 3.1",
+    "jade": ">= 0.28",
+    "nib": ">= 0.9",
+    "sequelize": ">= 1.6",
+    "sqlite3": ">= 2.1",
+    "stylus": ">= 0.32",
+    "underscore": ">= 1.4"
   },
   "devDependencies": {
     "nodeunit": ">= 0.5.0"

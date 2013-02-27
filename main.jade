@@ -7,7 +7,7 @@ html(lang='en')
     link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/css/bootstrap.no-icons.min.css')
     link(rel='stylesheet', type='text/css', href='//netdna.bootstrapcdn.com/font-awesome/2.0/css/font-awesome.css')
     link(rel='stylesheet', type='text/css', href='//fonts.googleapis.com/css?family=Rosario|Inconsolata')
-    link(rel='stylesheet', type='text/css', href='#{settings.basepath()}tomato.css')
+    != css('tomato')
     //if lte IE 8
       script(src='//html5shiv.googlecode.com/svn/trunk/html5.js')
     - if (settings.analytics)
@@ -82,6 +82,4 @@ html(lang='en')
     script(src='//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/js/bootstrap.min.js')
     script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js')
     script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular-resource.min.js')
-    script(src='#{settings.basepath()}tomato.js')
-    script
-      $(function() { require('tomato'); });
+    != js('tomato.js')
