@@ -6,16 +6,23 @@ TimerCtrl = ($scope, Work, Break) ->
     brake: null
 
   E = $('#timer')
+
   show = ->
+    E.css top: '20%'
     E.modal('show').on 'hidden', ->
       console.log T
+      E.css top: -1000
       Work.remove(workId: T.work.id, taskId: T.work.taskId) if T.work
       Break.remove(breakId: T.brake.id) if T.brake
+
+  $scope.hide = ->
+    E.modal('hide')
+    E.css top: -1000
 
   $scope.finishBreak = ->
     T.brake.$save breakId: T.brake.id, ->
       T.brake = null
-      E.modal('hide')
+      $scope.hide()
 
   $scope.$on 'start:work', (event, work) ->
     sec = 60 * $scope.tomato.workMin
@@ -34,10 +41,12 @@ TimerCtrl = ($scope, Work, Break) ->
     T.brake = brake
     show()
 
+  $scope.hide()
+
 TimerCtrl.$inject = ['$scope', 'Work', 'Break']
 
 
-TomatoCtrl = ($scope, Tomato, Task, Work, Break) ->
+TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
   $scope.tomato = Tomato.get()
   $scope.tasks = Task.query()
 
@@ -86,17 +95,17 @@ TomatoCtrl = ($scope, Tomato, Task, Work, Break) ->
     return if $scope.ui.task.name is ''
     Task.save $scope.ui.task, (task) ->
       $scope.tasks.push task
-      $scope.ui.task = new Task(name: '', priority: 0, difficulty: 0)
-      $timeout($('#cr').select, 100)
+      $scope.ui.task = new Task name: '', priority: 0, difficulty: 0
+      $timeout $('#cr').select, 100
 
   $scope.startBreak = ->
     Break.save $scope.ui.brake, (brake) ->
-      $scope.ui.brake = new Break(name: 'quick')
+      $scope.ui.brake = new Break name: 'quick'
       $scope.$broadcast 'start:break', brake
 
   $('#cr').select()
 
-TomatoCtrl.$inject = ['$scope', 'Tomato', 'Task', 'Work', 'Break']
+TomatoCtrl.$inject = ['$scope', '$timeout', 'Tomato', 'Task', 'Work', 'Break']
 
 
 TaskCtrl = ($scope, Work) ->

@@ -21,6 +21,7 @@ clock = ($timeout) ->
         w = scope.timer.work
         w.$save workId: w.id, taskId: w.TaskId
         scope.timer.work = null
+        scope.hide()
       min = Math.floor scope.timer.clock / 60
       sec = scope.timer.clock - min * 60
       p = (x) -> if x < 10 then "0#{x}" else "#{x}"
@@ -34,6 +35,8 @@ clock = ($timeout) ->
 
     ring()
     schedule()
+
+clock.$inject = ['$timeout']
 
 
 angular.module('app.directives', [])
