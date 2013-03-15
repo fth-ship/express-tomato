@@ -10,17 +10,17 @@
   "main": "main.coffee",
   "dependencies": {
     "coffee-script": ">= 1.5",
-    "connect-assets": ">= 2.3",
     "express": ">= 3.1",
     "jade": ">= 0.28",
     "nib": ">= 0.9",
     "sequelize": ">= 1.6",
     "sqlite3": ">= 2.1",
+    "stitch": ">= 0.3",
     "stylus": ">= 0.32",
-    "underscore": ">= 1.4"
+    "uglify-js": ">= 2.2"
   },
   "devDependencies": {
-    "nodeunit": ">= 0.5.0"
+    "nodeunit": ">= 0.5"
   },
   "engines": {
     "node": "*"

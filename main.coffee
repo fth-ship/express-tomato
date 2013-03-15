@@ -19,12 +19,18 @@
 # SOFTWARE.
 
 _ = require 'underscore'
-assets = require 'connect-assets'
 express = require 'express'
+nib = require 'nib'
 sqlz = require 'sequelize'
+stitch = require 'stitch'
+stylus = require 'stylus'
+uglify = require 'uglify-js'
 
+jsapp = stitch.createPackage
+  paths: ["#{__dirname}/assets/js"]
+  dependencies: []
 
-module.exports.middleware = (options) ->
+exports.middleware = (options) ->
   db = new sqlz '', '', '',
     dialect: 'sqlite'
     storage: options?.db or 'tomato.db'
@@ -113,20 +119,39 @@ module.exports.middleware = (options) ->
 
   # APP
 
+  __static = options?.static or "#{__dirname}/public"
+
   app = express()
 
   app.configure ->
-    app.set 'basepath', -> "#{app.path()}/"
     app.set 'analytics', options?.analytics
     app.set 'views', __dirname
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
     app.set 'strict routing', true
-    app.use assets()
     app.use express.methodOverride()
     app.use express.bodyParser()
-    app.use express.static "#{__dirname}/public", maxAge: 7 * 86400 * 1000
+    app.use stylus.middleware(
+       src: "#{__dirname}/assets/css"
+       dest: __static
+       compile: (str, path) ->
+         stylus(str)
+           .set('filename', path)
+           .set('compress', true)
+           .use(nib()))
+    app.use express.static __static, maxAge: 7 * 86400000
     app.use app.router
+
+  app.configure 'development', ->
+    app.get '/tomato.js', jsapp.createServer()
+
+  app.configure 'production', ->
+    jsapp.compile (err, source) ->
+      {gen_code, ast_squeeze} = uglify.uglify
+      minified = gen_code ast_squeeze uglify.parser.parse source
+      fs.writeFile "#{__static}/tomato.js", minified, (err) ->
+        throw err if err
+        console.log "compiled #{__static}/tomato.js"
 
   # AUTH
 
