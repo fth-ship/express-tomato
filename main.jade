@@ -67,12 +67,8 @@ html(lang='en')
         .modal-body
           h1 {{ timer.name }}
           #clock(clock)
-          form(ng-class='{ hide: timer.clock > 0 }')
-            .input-append
-              input.span1(ng-model='ui.brake.name', type='text', size='5')
-              button.btn(ng-click='startBreak()') Break
           form(ng-show='timer.brake')
-            button.btn.btn-info(ng-click='finishBreak()') Done
+            button.btn.btn-info(ng-click='finishBreak()') I'm Back!
 
     script(type='text/ng-template', id='/report.html')
       .row
