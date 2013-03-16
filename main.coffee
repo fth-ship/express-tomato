@@ -20,15 +20,14 @@
 
 _ = require 'underscore'
 express = require 'express'
+fs = require 'fs'
 nib = require 'nib'
 sqlz = require 'sequelize'
 stitch = require 'stitch'
 stylus = require 'stylus'
 uglify = require 'uglify-js'
 
-jsapp = stitch.createPackage
-  paths: ["#{__dirname}/assets/js"]
-  dependencies: []
+jsapp = stitch.createPackage paths: ["#{__dirname}/assets/js"]
 
 exports.middleware = (options) ->
   db = new sqlz '', '', '',
@@ -147,9 +146,9 @@ exports.middleware = (options) ->
 
   app.configure 'production', ->
     jsapp.compile (err, source) ->
-      {gen_code, ast_squeeze} = uglify.uglify
-      minified = gen_code ast_squeeze uglify.parser.parse source
-      fs.writeFile "#{__static}/tomato.js", minified, (err) ->
+      throw err if err
+      minified = uglify.minify source, fromString: true, mangle: false
+      fs.writeFile "#{__static}/tomato.js", minified.code, (err) ->
         throw err if err
         console.log "compiled #{__static}/tomato.js"
 
