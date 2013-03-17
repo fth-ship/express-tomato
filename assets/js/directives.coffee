@@ -19,6 +19,8 @@ clock = ($timeout) ->
       if scope.timer.clock is 0
         ring()
         w = scope.timer.work
+        w.stoppedAt = moment.utc().format()
+        w.stoppedAtOffset = moment().zone()
         w.$save workId: w.id, taskId: w.TaskId
         scope.timer.work = null
         scope.hide()

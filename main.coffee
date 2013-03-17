@@ -21,7 +21,9 @@
 _ = require 'underscore'
 express = require 'express'
 fs = require 'fs'
+moment = require 'moment'
 nib = require 'nib'
+querystring = require 'querystring'
 sqlz = require 'sequelize'
 stitch = require 'stitch'
 stylus = require 'stylus'
@@ -54,21 +56,34 @@ exports.middleware = (options) ->
 
   # MODELS
 
+  # breaks are labeled segments of time not associated with a specific task
+  Break = db.define "#{prefix}Break",
+    {
+      name: { type: sqlz.STRING, allowNull: false }
+      startedAt: { type: sqlz.DATE, allowNull: false }
+      startedAtOffset: { type: sqlz.INTEGER, allowNull: false }
+      stoppedAt: sqlz.DATE
+      stoppedAtOffset: sqlz.INTEGER
+    },
+    freezeTableName: true
+    timestamps: false
+
   # works are timed work periods -- something contributed to a task
   Work = db.define "#{prefix}Work",
     {
-      id:
-        type: sqlz.INTEGER
-        primaryKey: true
+      id: { type: sqlz.INTEGER, primaryKey: true }
+      startedAt: { type: sqlz.DATE, allowNull: false }
+      startedAtOffset: { type: sqlz.INTEGER, allowNull: false }
+      stoppedAt: sqlz.DATE
+      stoppedAtOffset: sqlz.INTEGER
     },
     freezeTableName: true
+    timestamps: false
 
   # tasks are individual line items in a tomato -- something to be accomplished
   Task = db.define "#{prefix}Task",
     {
-      name:
-        type: sqlz.STRING
-        allowNull: false
+      name: sqlz.STRING
       priority:
         type: sqlz.INTEGER
         allowNull: false
@@ -84,13 +99,6 @@ exports.middleware = (options) ->
     freezeTableName: true
 
   Task.hasMany Work, foreignKey: 'taskId'
-
-  # breaks are just labeled segments of time
-  Break = db.define "#{prefix}Break",
-    {
-      name: sqlz.STRING
-    },
-    freezeTableName: true
 
   # a tomato is a list of tasks and a list of breaks
   Tomato = db.define "#{prefix}Tomato",
@@ -128,6 +136,8 @@ exports.middleware = (options) ->
     app.set 'view options', layout: false
     app.set 'view engine', 'jade'
     app.set 'strict routing', true
+
+    #app.use express.logger 'short'
     app.use express.methodOverride()
     app.use express.bodyParser()
     app.use stylus.middleware(
@@ -169,13 +179,14 @@ exports.middleware = (options) ->
       opts = slug: slug, user: name, workMin: req.body.workMin
       Tomato.create_ opts, (err, tomato) ->
         return next(err) if err
-        res.redirect "#{slug}/"
+        res.redirect "#{querystring.escape slug}/"
 
   # GET /:tomato -- return the html to drive the client-side tomato app
-  app.get '/:tomato', (req, res) -> res.redirect "#{req.tomato.slug}/"
+  app.get '/:tomato', (req, res) ->
+    res.redirect "#{querystring.escape req.tomato.slug}/"
   app.get '/:tomato/', (req, res) ->
     # remove tomatoes that haven't been updated in 100d.
-    old = ['updatedAt < ?', new Date Date.now() - 86400000 * 100]
+    old = ['updatedAt < ?', moment.utc().subtract('days', 100).format()]
     Tomato.findAll(where: old).success((ts) -> t.destroy() for t in ts)
     res.render 'main', tomato: req.tomato
 
@@ -265,17 +276,23 @@ exports.middleware = (options) ->
 
   # POST /:tomato/works -- start work period
   app.post '/:tomato/works', (req, res, next) ->
-    query = tomatoId: req.tomato.id, id: req.param 'taskId'
+    query = tomatoId: req.tomato.id, id: req.query.taskId
     Task.find_ where: query, (err, task) ->
       return next(err) if err
-      Work.create_ tomatoId: req.tomato.id, taskId: task.id, (err, work) ->
+      fields =
+        tomatoId: req.tomato.id
+        taskId: task.id
+        startedAt: req.body.startedAt
+        startedAtOffset: req.body.startedAtOffset
+      Work.create_ fields, (err, work) ->
         return next(err) if err
         req.tomato.save()
         res.send work
 
   # POST /:tomato/works/:work -- finish work period
   app.post '/:tomato/works/:work', (req, res, next) ->
-    req.work.save_ (err, work) ->
+    fields = ['stoppedAt', 'stoppedAtOffset']
+    req.work.updateAttributes_ req.body, fields, (err, work) ->
       return next(err) if err
       req.tomato.save()
       res.send work
@@ -304,15 +321,20 @@ exports.middleware = (options) ->
 
   # POST /:tomato/breaks -- create a new break for a tomato
   app.post '/:tomato/breaks', (req, res, next) ->
-    opts = tomatoId: req.tomato.id, name: req.param 'name'
-    Break.create_ opts, (err, brake) ->
+    fields =
+      tomatoId: req.tomato.id
+      name: req.body.name
+      startedAt: req.body.startedAt
+      startedAtOffset: req.body.startedAtOffset
+    Break.create_ fields, (err, brake) ->
       return next(err) if err
       req.tomato.save()
       res.send brake
 
   # POST /:tomato/breaks/:break -- update data for a break
   app.post '/:tomato/breaks/:break', (req, res, next) ->
-    req.brake.updateAttributes_ req.body, ['name'], (err, brake) ->
+    fields = ['stoppedAt', 'stoppedAtOffset']
+    req.brake.updateAttributes_ req.body, fields, (err, brake) ->
       return next(err) if err
       req.tomato.save()
       res.send brake
