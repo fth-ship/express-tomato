@@ -60,10 +60,18 @@ exports.middleware = (options) ->
   Break = db.define "#{prefix}Break",
     {
       name: { type: sqlz.STRING, allowNull: false }
-      startedAt: { type: sqlz.DATE, allowNull: false }
-      startedAtOffset: { type: sqlz.INTEGER, allowNull: false }
-      stoppedAt: sqlz.DATE
-      stoppedAtOffset: sqlz.INTEGER
+
+      start_utc: { type: sqlz.DATE, allowNull: false }
+      start_zone: { type: sqlz.INTEGER, allowNull: false }
+      start_lat: sqlz.FLOAT
+      start_lng: sqlz.FLOAT
+      start_acc: sqlz.FLOAT
+
+      stop_utc: sqlz.DATE
+      stop_zone: sqlz.INTEGER
+      stop_lat: sqlz.FLOAT
+      stop_lng: sqlz.FLOAT
+      stop_acc: sqlz.FLOAT
     },
     freezeTableName: true
     timestamps: false
@@ -72,10 +80,18 @@ exports.middleware = (options) ->
   Work = db.define "#{prefix}Work",
     {
       id: { type: sqlz.INTEGER, primaryKey: true }
-      startedAt: { type: sqlz.DATE, allowNull: false }
-      startedAtOffset: { type: sqlz.INTEGER, allowNull: false }
-      stoppedAt: sqlz.DATE
-      stoppedAtOffset: sqlz.INTEGER
+
+      start_utc: { type: sqlz.DATE, allowNull: false }
+      start_zone: { type: sqlz.INTEGER, allowNull: false }
+      start_lat: sqlz.FLOAT
+      start_lng: sqlz.FLOAT
+      start_acc: sqlz.FLOAT
+
+      stop_utc: sqlz.DATE
+      stop_zone: sqlz.INTEGER
+      stop_lat: sqlz.FLOAT
+      stop_lng: sqlz.FLOAT
+      stop_acc: sqlz.FLOAT
     },
     freezeTableName: true
     timestamps: false
@@ -94,7 +110,7 @@ exports.middleware = (options) ->
         allowNull: false
         defaultValue: 0
         validate: min: 0
-      finishedAt: sqlz.DATE
+      finish_utc: sqlz.DATE
     },
     freezeTableName: true
 
@@ -238,7 +254,6 @@ exports.middleware = (options) ->
       name: req.body.name
       priority: req.body.priority
       difficulty: req.body.difficulty
-      finishedAt: null
     Task.create_ opts, (err, task) ->
       return next(err) if err
       req.tomato.save()
@@ -246,7 +261,7 @@ exports.middleware = (options) ->
 
   # POST /:tomato/tasks/:task -- update data for a task
   app.post '/:tomato/tasks/:task', (req, res, next) ->
-    fields = ['name', 'priority', 'difficulty', 'finishedAt']
+    fields = ['name', 'priority', 'difficulty', 'finish_utc']
     req.task.updateAttributes_ req.body, fields, (err, task) ->
       return next(err) if err
       req.tomato.save()
@@ -282,8 +297,11 @@ exports.middleware = (options) ->
       fields =
         tomatoId: req.tomato.id
         taskId: task.id
-        startedAt: req.body.startedAt
-        startedAtOffset: req.body.startedAtOffset
+        start_utc: req.body.start_utc
+        start_zone: req.body.start_zone
+        start_lat: req.body.start_lat
+        start_lng: req.body.start_lng
+        start_acc: req.body.start_acc
       Work.create_ fields, (err, work) ->
         return next(err) if err
         req.tomato.save()
@@ -291,7 +309,7 @@ exports.middleware = (options) ->
 
   # POST /:tomato/works/:work -- finish work period
   app.post '/:tomato/works/:work', (req, res, next) ->
-    fields = ['stoppedAt', 'stoppedAtOffset']
+    fields = ['stop_utc', 'stop_zone', 'stop_lat', 'stop_lng', 'stop_acc']
     req.work.updateAttributes_ req.body, fields, (err, work) ->
       return next(err) if err
       req.tomato.save()
@@ -324,8 +342,11 @@ exports.middleware = (options) ->
     fields =
       tomatoId: req.tomato.id
       name: req.body.name
-      startedAt: req.body.startedAt
-      startedAtOffset: req.body.startedAtOffset
+      start_utc: req.body.start_utc
+      start_zone: req.body.start_zone
+      start_lat: req.body.start_lat
+      start_lng: req.body.start_lng
+      start_acc: req.body.start_acc
     Break.create_ fields, (err, brake) ->
       return next(err) if err
       req.tomato.save()
@@ -333,7 +354,7 @@ exports.middleware = (options) ->
 
   # POST /:tomato/breaks/:break -- update data for a break
   app.post '/:tomato/breaks/:break', (req, res, next) ->
-    fields = ['stoppedAt', 'stoppedAtOffset']
+    fields = ['stop_utc', 'stop_zone', 'stop_lat', 'stop_lng', 'stop_acc']
     req.brake.updateAttributes_ req.body, fields, (err, brake) ->
       return next(err) if err
       req.tomato.save()

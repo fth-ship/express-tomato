@@ -1,4 +1,6 @@
 TimerCtrl = ($scope, Work, Break) ->
+  $scope.doAlert = true
+
   T = $scope.timer =
     clock: 0
     name: null
@@ -19,15 +21,18 @@ TimerCtrl = ($scope, Work, Break) ->
     E.css top: -1000
 
   $scope.finishBreak = ->
-    T.brake.stoppedAt = moment.utc().format()
-    T.brake.stoppedAtOffset = moment().zone()
+    T.brake.stop_utc = moment.utc().format()
+    T.brake.stop_offset = moment().zone()
+    T.brake.stop_lat = $scope.$parent.geo.latitude
+    T.brake.stop_lng = $scope.$parent.geo.longitude
+    T.brake.stop_acc = $scope.$parent.geo.accuracy
     T.brake.$save breakId: T.brake.id, ->
       T.brake = null
       $scope.hide()
 
   $scope.$on 'start:work', (event, work) ->
     sec = 60 * $scope.tomato.workMin
-    elapsed = moment.utc().diff moment.utc work.startedAt
+    elapsed = moment.utc().diff moment.utc work.start_utc
     T.clock = sec - Math.floor elapsed / 1000
     T.work = work
     T.brake = null
@@ -35,7 +40,7 @@ TimerCtrl = ($scope, Work, Break) ->
     show()
 
   $scope.$on 'start:break', (event, brake) ->
-    elapsed = moment.utc().diff moment.utc brake.startedAt
+    elapsed = moment.utc().diff moment.utc brake.start_utc
     T.clock = Math.max 1, Math.floor elapsed / 1000
     T.name = brake.name
     T.work = null
@@ -51,17 +56,21 @@ TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
   $scope.tomato = Tomato.get()
   $scope.tasks = Task.query()
 
+  $scope.geo = {}
+  navigator.geolocation.getCurrentPosition (geoloc) ->
+    $scope.geo = geoloc.coords
+
   $scope.breaks = Break.query ->
     for brake in $scope.breaks
-      continue if brake.stoppedAt > brake.startedAt
+      continue if brake.stop_utc > brake.start_utc
       $scope.$broadcast 'start:break', brake
       break
 
   $scope.works = Work.query ->
     earliest = moment.utc().subtract $scope.tomato.workMin, 'minutes'
     for work in $scope.works
-      continue unless work.stoppedAt < work.startedAt
-      cr = moment.utc work.startedAt
+      continue unless work.stop_utc < work.start_utc
+      cr = moment.utc work.start_utc
       if cr < earliest
         work.$remove(workId: work.id, taskId: work.taskId)
       else
@@ -70,7 +79,7 @@ TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
 
   $scope.ui =
     filter: ''
-    order: (t) -> "#{t.finishedAt}-#{9 - t.priority}-#{t.name}"
+    order: (t) -> "#{t.finish_utc}-#{9 - t.priority}-#{t.name}"
     edit: false
     task: new Task(name: '', priority: 0, difficulty: 0)
     brake: new Break(name: 'quick')
@@ -99,8 +108,11 @@ TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
       $timeout $('#cr').select, 100
 
   $scope.startBreak = ->
-    $scope.ui.brake.startedAt = moment.utc().format()
-    $scope.ui.brake.startedAtOffset = moment().zone()
+    $scope.ui.brake.start_utc = moment.utc().format()
+    $scope.ui.brake.start_offset = moment().zone()
+    $scope.ui.brake.start_lat = $scope.geo.latitude
+    $scope.ui.brake.start_lng = $scope.geo.longitude
+    $scope.ui.brake.start_acc = $scope.geo.accuracy
     Break.save $scope.ui.brake, (brake) ->
       $scope.ui.brake = new Break name: 'quick'
       $scope.$broadcast 'start:break', brake
@@ -117,27 +129,30 @@ TaskCtrl = ($scope, Work) ->
     (w for w in $scope.$parent.works when w.taskId is task.id)
 
   $scope.flag = ->
-    return if task.finishedAt > task.createdAt
+    return if task.finish_utc > task.createdAt
     task.priority = if task.priority is 0 then 1 else 0
     task.$save taskId: task.id
 
   $scope.start = ->
-    return if task.finishedAt > task.createdAt
+    return if task.finish_utc > task.createdAt
     w = new Work
-      startedAt: moment.utc().format()
-      startedAtOffset: moment().zone()
+      start_utc: moment.utc().format()
+      start_offset: moment().zone()
+      start_lat: $scope.$parent.geo.latitude
+      start_lng: $scope.$parent.geo.longitude
+      start_acc: $scope.$parent.geo.accuracy
     w.$save taskId: task.id, (w) ->
       $scope.$parent.$parent.$broadcast 'start:work', w
 
   $scope.remove = ->
-    return if task.finishedAt > task.createdAt
+    return if task.finish_utc > task.createdAt
     task.$remove taskId: task.id
 
   $scope.finish = ->
-    if task.finishedAt <= task.createdAt
-      task.finishedAt = moment()
+    if task.finish_utc <= task.createdAt
+      task.finish_utc = moment()
     else
-      task.finishedAt = moment(0)
+      task.finish_utc = moment(0)
     task.$save taskId: task.id
 
 TaskCtrl.$inject = ['$scope', 'Work']
