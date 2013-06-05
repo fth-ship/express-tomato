@@ -1,6 +1,4 @@
 TimerCtrl = ($scope, Work, Break) ->
-  $scope.doAlert = true
-
   T = $scope.timer =
     clock: 0
     name: null
@@ -22,12 +20,22 @@ TimerCtrl = ($scope, Work, Break) ->
 
   $scope.finishBreak = ->
     T.brake.stop_utc = moment.utc().format()
-    T.brake.stop_offset = moment().zone()
+    T.brake.stop_zone = moment().zone()
     T.brake.stop_lat = $scope.$parent.geo.latitude
     T.brake.stop_lng = $scope.$parent.geo.longitude
     T.brake.stop_acc = $scope.$parent.geo.accuracy
     T.brake.$save breakId: T.brake.id, ->
       T.brake = null
+      $scope.hide()
+
+  $scope.finishWork = ->
+    T.work.stop_utc = moment.utc().format()
+    T.work.stop_zone = moment().zone()
+    T.work.stop_lat = $scope.$parent.geo.latitude
+    T.work.stop_lng = $scope.$parent.geo.longitude
+    T.work.stop_acc = $scope.$parent.geo.accuracy
+    T.work.$save workId: T.work.id, taskId: T.work.taskId, ->
+      T.work = null
       $scope.hide()
 
   $scope.$on 'start:work', (event, work) ->
@@ -55,6 +63,9 @@ TimerCtrl.$inject = ['$scope', 'Work', 'Break']
 TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
   $scope.tomato = Tomato.get()
   $scope.tasks = Task.query()
+
+  $scope.doAlert = true
+  $scope.doSound = true
 
   $scope.geo = {}
   navigator.geolocation.getCurrentPosition (geoloc) ->
@@ -109,7 +120,7 @@ TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
 
   $scope.startBreak = ->
     $scope.ui.brake.start_utc = moment.utc().format()
-    $scope.ui.brake.start_offset = moment().zone()
+    $scope.ui.brake.start_zone = moment().zone()
     $scope.ui.brake.start_lat = $scope.geo.latitude
     $scope.ui.brake.start_lng = $scope.geo.longitude
     $scope.ui.brake.start_acc = $scope.geo.accuracy
@@ -137,7 +148,7 @@ TaskCtrl = ($scope, Work) ->
     return if task.finish_utc > task.createdAt
     w = new Work
       start_utc: moment.utc().format()
-      start_offset: moment().zone()
+      start_zone: moment().zone()
       start_lat: $scope.$parent.geo.latitude
       start_lng: $scope.$parent.geo.longitude
       start_acc: $scope.$parent.geo.accuracy
