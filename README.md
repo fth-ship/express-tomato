@@ -7,6 +7,12 @@ To use as a standalone app, just start up the server:
 
     $ coffee main.coffee
 
+Or if you was cloned the repo:
+    
+    $ sudo npm install -g lmj-tomato
+
+    $ lmj-tomato -r [ path to the project ]
+
 To mount within another express server, run the `.middleware()` method:
 
     app.use('/tomato', require('lmj-tomato').middleware(options))
