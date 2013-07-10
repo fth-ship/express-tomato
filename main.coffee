@@ -36,21 +36,6 @@ exports.middleware = (options) ->
     dialect: 'sqlite'
     storage: options?.db or 'tomato.db'
     logging: false
-    define:
-      classMethods:
-        findAll_: (opts, cb) ->
-          @findAll(opts).error(cb).success (xs) -> cb null, xs
-        find_: (opts, cb) ->
-          @find(opts).error(cb).success (x) -> cb null, x
-        create_: (opts, cb) ->
-          @create(opts).error(cb).success (x) -> cb null, x
-      instanceMethods:
-        updateAttributes_: (data, fields, cb) ->
-          @updateAttributes(data, fields).error(cb).success (x) -> cb null, x
-        save_: (cb) ->
-          @save().error(cb).success (x) -> cb null, x
-        destroy_: (cb) ->
-          @destroy().error(cb).success -> cb null
 
   prefix = options?.prefix or 'tomato_'
 
@@ -111,8 +96,10 @@ exports.middleware = (options) ->
         defaultValue: 0
         validate: min: 0
       finish_utc: sqlz.DATE
+      create_utc: sqlz.DATE
     },
     freezeTableName: true
+    timestamps: false
 
   Task.hasMany Work, foreignKey: 'taskId'
 
@@ -193,7 +180,7 @@ exports.middleware = (options) ->
       return next(err) if err
       slug = req.body.slug
       opts = slug: slug, user: name, workMin: req.body.workMin
-      Tomato.create_ opts, (err, tomato) ->
+      Tomato.create(opts).done (err, tomato) ->
         return next(err) if err
         res.redirect "#{querystring.escape slug}/"
 
@@ -210,7 +197,7 @@ exports.middleware = (options) ->
 
   app.param 'tomato', (req, res, next, slug) ->
     getUserName req, (err, name) ->
-      Tomato.find_ where: {slug: slug, user: name}, (err, tomato) ->
+      Tomato.find(where: slug: slug, user: name).done (err, tomato) ->
         return next(err) if err
         return next(status: 404) unless tomato
         req.tomato = tomato
@@ -222,20 +209,20 @@ exports.middleware = (options) ->
 
   # POST /:tomato/tomato -- update the id, name, etc. of a tomato
   app.post '/:tomato/tomato', (req, res, next) ->
-    req.tomato.updateAttributes_ req.body, ['slug', 'workMin'], (err, tomato) ->
+    req.tomato.updateAttributes(req.body, ['slug', 'workMin']).done (err, tomato) ->
       return next(err) if err
       res.send tomato
 
   # DELETE /:tomato -- delete a tomato and all tasks and breaks
   app.del '/:tomato/tomato', (req, res, next) ->
-    req.tomato.destroy_ (err) ->
+    req.tomato.destroy().done (err) ->
       return next(err) if err
       res.send 200
 
   # -- TASKS --
 
   app.param 'task', (req, res, next, id) ->
-    Task.find_ where: {tomatoId: req.tomato.id, id: id}, (err, task) ->
+    Task.find(where: tomatoId: req.tomato.id, id: id).done (err, task) ->
       return next(err) if err
       return next(status: 404) unless task
       req.task = task
@@ -243,7 +230,7 @@ exports.middleware = (options) ->
 
   # GET /:tomato/tasks -- get all tasks for a tomato
   app.get '/:tomato/tasks', (req, res, next) ->
-    Task.findAll_ where: {tomatoId: req.tomato.id}, (err, tasks) ->
+    Task.findAll(where: tomatoId: req.tomato.id, {raw: true}).done (err, tasks) ->
       return next(err) if err
       res.send tasks
 
@@ -254,7 +241,9 @@ exports.middleware = (options) ->
       name: req.body.name
       priority: req.body.priority
       difficulty: req.body.difficulty
-    Task.create_ opts, (err, task) ->
+      create_utc: moment.utc().toDate()
+      finish_utc: moment.utc(0).toDate()
+    Task.create(opts).done (err, task) ->
       return next(err) if err
       req.tomato.save()
       res.send task
@@ -262,14 +251,14 @@ exports.middleware = (options) ->
   # POST /:tomato/tasks/:task -- update data for a task
   app.post '/:tomato/tasks/:task', (req, res, next) ->
     fields = ['name', 'priority', 'difficulty', 'finish_utc']
-    req.task.updateAttributes_ req.body, fields, (err, task) ->
+    req.task.updateAttributes(req.body, fields).done (err, task) ->
       return next(err) if err
       req.tomato.save()
       res.send task
 
   # DELETE /:tomato/tasks/:task -- remove a task
   app.del '/:tomato/tasks/:task', (req, res, next) ->
-    req.task.destroy_ (err) ->
+    req.task.destroy().done (err) ->
       return next(err) if err
       req.tomato.save()
       res.send 200
@@ -277,7 +266,7 @@ exports.middleware = (options) ->
   # -- WORKS --
 
   app.param 'work', (req, res, next, id) ->
-    Work.find_ where: {tomatoId: req.tomato.id, id: id}, (err, work) ->
+    Work.find(where: tomatoId: req.tomato.id, id: id).done (err, work) ->
       return next(err) if err
       return next(status: 404) unless work
       req.work = work
@@ -285,14 +274,14 @@ exports.middleware = (options) ->
 
   # GET /:tomato/works -- return work periods
   app.get '/:tomato/works', (req, res, next) ->
-    Work.findAll_ where: {tomatoId: req.tomato.id}, (err, works) ->
+    Work.findAll(where: tomatoId: req.tomato.id, {raw: true}).done (err, works) ->
       return next(err) if err
       res.send works
 
   # POST /:tomato/works -- start work period
   app.post '/:tomato/works', (req, res, next) ->
     query = tomatoId: req.tomato.id, id: req.query.taskId
-    Task.find_ where: query, (err, task) ->
+    Task.find(where: query).done (err, task) ->
       return next(err) if err
       fields =
         tomatoId: req.tomato.id
@@ -302,7 +291,8 @@ exports.middleware = (options) ->
         start_lat: req.body.start_lat
         start_lng: req.body.start_lng
         start_acc: req.body.start_acc
-      Work.create_ fields, (err, work) ->
+        stop_utc: moment.utc(0).toDate()
+      Work.create(fields).done (err, work) ->
         return next(err) if err
         req.tomato.save()
         res.send work
@@ -310,14 +300,14 @@ exports.middleware = (options) ->
   # POST /:tomato/works/:work -- finish work period
   app.post '/:tomato/works/:work', (req, res, next) ->
     fields = ['stop_utc', 'stop_zone', 'stop_lat', 'stop_lng', 'stop_acc']
-    req.work.updateAttributes_ req.body, fields, (err, work) ->
+    req.work.updateAttributes(req.body, fields).done (err, work) ->
       return next(err) if err
       req.tomato.save()
       res.send work
 
   # DELETE /:tomato/works/:work -- cancel work period
   app.del '/:tomato/works/:work', (req, res, next) ->
-    req.work.destroy_ (err) ->
+    req.work.destroy().done (err) ->
       return next(err) if err
       req.tomato.save()
       res.send 200
@@ -325,7 +315,7 @@ exports.middleware = (options) ->
   # -- BREAKS --
 
   app.param 'break', (req, res, next, id) ->
-    Break.find_ where: {tomatoId: req.tomato.id, id: id}, (err, brake) ->
+    Break.find(where: tomatoId: req.tomato.id, id: id).done (err, brake) ->
       return next(err) if err
       return next(status: 404) unless brake
       req.brake = brake
@@ -333,7 +323,7 @@ exports.middleware = (options) ->
 
   # GET /:tomato/breaks -- get all breaks for a tomato
   app.get '/:tomato/breaks', (req, res, next) ->
-    Break.findAll_ where: {tomatoId: req.tomato.id}, (err, brakes) ->
+    Break.findAll(where: tomatoId: req.tomato.id, {raw: true}).done (err, brakes) ->
       return next(err) if err
       res.send brakes
 
@@ -347,7 +337,8 @@ exports.middleware = (options) ->
       start_lat: req.body.start_lat
       start_lng: req.body.start_lng
       start_acc: req.body.start_acc
-    Break.create_ fields, (err, brake) ->
+      stop_utc: moment.utc(0).toDate()
+    Break.create(fields).done (err, brake) ->
       return next(err) if err
       req.tomato.save()
       res.send brake
@@ -355,14 +346,14 @@ exports.middleware = (options) ->
   # POST /:tomato/breaks/:break -- update data for a break
   app.post '/:tomato/breaks/:break', (req, res, next) ->
     fields = ['stop_utc', 'stop_zone', 'stop_lat', 'stop_lng', 'stop_acc']
-    req.brake.updateAttributes_ req.body, fields, (err, brake) ->
+    req.brake.updateAttributes(req.body, fields).done (err, brake) ->
       return next(err) if err
       req.tomato.save()
       res.send brake
 
   # DELETE /:tomato/breaks/:break -- remove a break
   app.del '/:tomato/breaks/:break', (req, res, next) ->
-    req.brake.destroy_ (err) ->
+    req.brake.destroy().done (err) ->
       return next(err) if err
       req.tomato.save()
       res.send 200
