@@ -4,7 +4,7 @@ html(lang='en')
     meta(charset='utf-8')
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
-    link(rel='stylesheet', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap.no-icons.min.css')
+    link(rel='stylesheet', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css')
     link(rel='stylesheet', href='//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome.css')
     link(rel='stylesheet', href='//fonts.googleapis.com/css?family=Source+Sans+Pro|Inconsolata')
     link(rel='stylesheet', href='../tomato.css')
@@ -27,50 +27,52 @@ html(lang='en')
     script(type='text/ng-template', id='/index.html')
       #title
         .container
-          #prefs.pull-right
-            i.icon-volume-up.toggler(ng-class='{ muted: !doSound }', ng-click='doSound=!doSound')
-            i.icon-bullhorn.toggler(ng-class='{ muted: !doAlert }', ng-click='doAlert=!doAlert')
-            i.icon-globe(ng-class='{ muted: !geo.latitude }')
-          h1(ng-hide='ui.edit', ng-click='edit()')
-            = "{{ tomato.slug }}"
-            small= " ({{ tomato.workMin }})"
-          form.form-inline(ng-submit='update()', ng-show='ui.edit')
-            .controls.controls-row
-              input#slug.span4(ng-model='tomato.slug', type='text')
-              input.span1(ng-model='tomato.workMin', type='text')
-              button.span1.btn.btn-primary(type='submit') Save
+          .row
+            #prefs.pull-right
+              i.icon-volume-up.toggler.tipped(title='Toggle sound', ng-class='{ muted: !doSound }', ng-click='doSound=!doSound')
+              i.icon-flag.toggler.tipped(title='Toggle alert', ng-class='{ muted: !doAlert }', ng-click='doAlert=!doAlert')
+              i.icon-globe.tipped(title='Toggle geo', ng-class='{ muted: geo == null, loading: geo != null && !geo.latitude }', ng-click='toggleGeo()')
+            h1(ng-hide='ui.edit', ng-click='edit()')
+              = "{{ tomato.slug }}"
+              small= " ({{ tomato.workMin }} min)"
+            form.form-inline(ng-submit='update()', ng-show='ui.edit')
+              .controls.controls-row
+                input#slug.span4(ng-model='tomato.slug', type='text')
+                input.span1(ng-model='tomato.workMin', type='text')
+                button.span1.btn.btn-primary(type='submit'): i.icon-ok
       #controls
         .container
-          form.pull-right
-            #filter.input-prepend
-              span.add-on: i.icon-search
-              input.span2(ng-model='ui.filter', type='text', placeholder='Filter')
-          form.pull-right
-            .input-append
-              input.span1(ng-model='ui.brake.name', type='text', size='5')
-              button.btn(ng-click='startBreak()') Break
-          form(ng-submit='addTask()')
-            .controls.controls-row
-              input#cr.span6(ng-model='ui.task.name', placeholder='Add a task...', type='text')
-      #tasks.container
-        .task(ng-repeat='task in tasks | filter:ui.filter | orderBy:ui.order',
-              ng-class='{ finished: task.finishedAt > task.createdAt }',
-              ng-controller='TaskCtrl',
-              ng-dblclick='start()')
           .row
+            form.pull-right
+              #filter.input-prepend
+                span.add-on: i.icon-filter
+                input.span1(ng-model='ui.filter', type='text')
+            form.pull-right
+              .input-append
+                input.span1(ng-model='ui.brake.name', type='text', size='5')
+                button.btn.tipped(title='Take a break', ng-click='startBreak()'): i.icon-coffee
+            form(ng-submit='addTask()')
+              input#cr.span6(ng-model='ui.task.name', placeholder='Add a task...', type='text')
+      #tasks
+        .container
+          .task.row(ng-repeat='task in tasks | filter:ui.filter | orderBy:ui.order',
+                    ng-class='{ finished: task.finish_utc > task.create_utc }',
+                    ng-controller='TaskCtrl',
+                    ng-dblclick='start()',
+                    tomato-dbltap='start()')
             .span6
               .name {{ task.name }}
-            .span4.tomatoes
+            .span3.tomatoes
               = '&nbsp;'
-              i.icon-star(ng-repeat='work in works()')
+              i.icon-cog(ng-repeat='work in works()')
             .span2.icons
-              i.icon-ok(ng-click='finish()', ng-class='{ on: task.finishedAt > task.createdAt }')
-              i.icon-flag(ng-click='flag()', ng-class='{ on: task.priority > 0 }')
-              i.icon-trash(ng-click='remove()')
+              i.icon-ok(title='Mark finished', ng-click='finish()', ng-class='{ on: task.finish_utc > task.create_utc }')
+              i.icon-star(title='Mark important', ng-click='flag()', ng-class='{ on: task.priority > 0 }')
+              i.icon-trash(title='Delete', ng-click='remove()')
       #timer.modal.fade(ng-class='{ work: timer.work, brake: timer.brake }', ng-controller='TimerCtrl')
         .modal-body
           h1 {{ timer.name }}
-          #clock(clock)
+          #clock(tomato-clock)
           form(ng-show='timer.brake')
             button.btn.btn-info(ng-click='finishBreak()') I'm Back!
 
