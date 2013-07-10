@@ -18,7 +18,8 @@
     "sqlite3": ">= 2.1",
     "stitch": ">= 0.3",
     "stylus": ">= 0.32",
-    "uglify-js": ">= 2.2"
+    "uglify-js": ">= 2.2",
+    "underscore": "*"
   },
   "devDependencies": {
     "nodeunit": ">= 0.5"
