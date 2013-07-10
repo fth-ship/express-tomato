@@ -36,5 +36,20 @@ clock = ($timeout) ->
 clock.$inject = ['$timeout']
 
 
+# adapted from http://goodfil.ms/blog/posts/2012/08/13/angularjs-and-the-goodfilms-mobile-site-part-1/
+doubleTap = ->
+  (scope, element, attrs) ->
+    tapping = false
+    element.bind 'touchmove', -> tapping = false
+    element.bind 'touchstart', ->
+      if tapping
+        scope.$apply(attrs['tomatoDbltap'])
+        tapping = false
+      else
+        tapping = true
+
+
 angular.module('app.directives', [])
-  .directive('clock', clock)
+  .directive('tomatoClock', clock)
+  .directive('tomatoDbltap', doubleTap)
+
