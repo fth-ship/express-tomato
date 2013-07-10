@@ -43,10 +43,10 @@ html(lang='en')
       #controls
         .container
           .row
-            form.pull-right
+            form.pull-right.hidden-phone
               #filter.input-prepend
                 span.add-on: i.icon-filter
-                input.span1(ng-model='ui.filter', type='text')
+                input.span2(ng-model='ui.filter', type='text', placeholder='Filter...')
             form.pull-right
               .input-append
                 input.span1(ng-model='ui.brake.name', type='text', size='5')
