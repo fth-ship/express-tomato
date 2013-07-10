@@ -61,15 +61,26 @@ TimerCtrl.$inject = ['$scope', 'Work', 'Break']
 
 
 TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
+  $('.tipped').tooltip placement: 'bottom'
+
   $scope.tomato = Tomato.get()
   $scope.tasks = Task.query()
 
   $scope.doAlert = true
   $scope.doSound = true
+  $scope.geo = null
 
-  $scope.geo = {}
-  navigator.geolocation.getCurrentPosition (geoloc) ->
-    $scope.geo = geoloc.coords
+  $scope.toggleGeo = ->
+    if $scope.geo is null
+      $scope.geo = {}
+    else
+      $scope.geo = null
+    if $scope.doGeo isnt null
+      navigator.geolocation.getCurrentPosition (geoloc) ->
+        $scope.geo = geoloc.coords
+        console.log $scope.geo
+
+  $scope.toggleGeo()
 
   $scope.breaks = Break.query ->
     for brake in $scope.breaks
@@ -90,7 +101,9 @@ TomatoCtrl = ($scope, $timeout, Tomato, Task, Work, Break) ->
 
   $scope.ui =
     filter: ''
-    order: (t) -> "#{t.finish_utc}-#{9 - t.priority}-#{t.name}"
+    order: (t) ->
+      finish = if t.finish_utc > t.create_utc then '1' else '0'
+      "#{finish}:#{9-t.priority}:#{t.create_utc}"
     edit: false
     task: new Task(name: '', priority: 0, difficulty: 0)
     brake: new Break(name: 'quick')
@@ -140,12 +153,12 @@ TaskCtrl = ($scope, Work) ->
     (w for w in $scope.$parent.works when w.taskId is task.id)
 
   $scope.flag = ->
-    return if task.finish_utc > task.createdAt
+    return if task.finish_utc > task.create_utc
     task.priority = if task.priority is 0 then 1 else 0
     task.$save taskId: task.id
 
   $scope.start = ->
-    return if task.finish_utc > task.createdAt
+    return if task.finish_utc > task.create_utc
     w = new Work
       start_utc: moment.utc().format()
       start_zone: moment().zone()
@@ -156,14 +169,14 @@ TaskCtrl = ($scope, Work) ->
       $scope.$parent.$parent.$broadcast 'start:work', w
 
   $scope.remove = ->
-    return if task.finish_utc > task.createdAt
+    return if task.finish_utc > task.create_utc
     task.$remove taskId: task.id
 
   $scope.finish = ->
-    if task.finish_utc <= task.createdAt
-      task.finish_utc = moment()
+    if task.finish_utc is null or task.finish_utc <= task.create_utc
+      task.finish_utc = moment.utc()
     else
-      task.finish_utc = moment(0)
+      task.finish_utc = moment.utc(0)
     task.$save taskId: task.id
 
 TaskCtrl.$inject = ['$scope', 'Work']
