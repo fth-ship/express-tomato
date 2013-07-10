@@ -1,4 +1,4 @@
-;(function () {
+(function () {
     'use strict';
     var tomato = require('commander'),
         spawn = require('child_process').spawn,
