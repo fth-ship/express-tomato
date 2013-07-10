@@ -2,3 +2,4 @@
 public/tomato.js
 node_modules
 *.db
+*.sw*

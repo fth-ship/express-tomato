@@ -8,6 +8,7 @@
     "url": "git://github.com/lmjohns3/express-tomato.git"
   },
   "main": "main.coffee",
+  "bin": "bin/tomato.js",
   "dependencies": {
     "coffee-script": ">= 1.5",
     "express": ">= 3.1",
@@ -19,7 +20,8 @@
     "stitch": ">= 0.3",
     "stylus": ">= 0.32",
     "uglify-js": ">= 2.2",
-    "underscore": "*"
+    "underscore": "*",
+    "commander": "*"
   },
   "devDependencies": {
     "nodeunit": ">= 0.5"
