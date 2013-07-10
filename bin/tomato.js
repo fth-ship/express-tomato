@@ -1,4 +1,4 @@
-(function () {
+;(function () {
     'use strict';
     var tomato = require('commander'),
         spawn = require('child_process').spawn,
@@ -7,15 +7,14 @@
 
     tomato
         .version( pack['version'] )
-        .option('-r, --run', 'Run tamato application.')
+        .option('-r, --run [project path]', 'Run tamato application.')
         .parse( process.argv );
 
     if ( tomato.run ) {
-        console.log( __dirname );
         var server = spawn('coffee', [
             'main.coffee'    
         ], {
-            pwd: path.join( __dirname, '..' ) 
+            pwd: path.join( __dirname, tomato.run ) 
         });
 
         server.stdout.on('data', function ( chunk ) {
