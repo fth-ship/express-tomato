@@ -1,14 +1,9 @@
 @import 'nib'
 
 body
-  font-family: Rosario, 'Lucida Grande', sans-serif
+  font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif
 
 #title
-  fixed: top 0px left 0px
-  height: 60px
-  width: 100%
-  background: #fff
-
   .search-query { margin-top: 10px }
   .form-inline
     margin-top: 15px
@@ -19,31 +14,32 @@ body
     &:hover { opacity: 1.0 }
 
 #prefs
-  padding-top: 3px
-  i { margin: 3px }
+  padding-top: 6px
+
+  i { margin-left: 9px }
+
+  .muted { color: #ddd }
+
   .toggler:hover { cursor: pointer }
 
-#controls
-  fixed: top 60px left 0px
-  height: 40px
-  width: 100%
-  background: #fff
+  .loading
+    animation: throbber 1.5s infinite
 
-  form { margin: 0 }
+@keyframes throbber
+  0%   { color: #8c8 }
+  50%  { color: #cfc }
+  100% { color: #8c8 }
 
 #timer
   text-align: center
 
   #clock
-    font-size: 10em
+    font-size: 6em
     height: 1em
     padding-top: 0.5em
     font-family: Inconsolata, Consolata, monospace
 
-  &.work
-    color: #369
-    h1:before { content: 'work on: ' }
-    h1:after { content: '' }
+  &.work { color: #369 }
 
   &.brake
     color: #396
@@ -54,11 +50,7 @@ body
   margin-left: 20px
 
 #tasks
-  margin-top: 100px
-  margin-bottom: 20px
-
   .task
-    height: 20px
     padding: 5px 0
     user-select(none)
 
@@ -66,7 +58,7 @@ body
       cursor: pointer
       padding-left: 10px
 
-    &:nth-child(even)
+    &:nth-child(odd)
       background: #dfefff
       &:hover { background: #ffdfbf }
       &.finished { background: #9f9f9f }
